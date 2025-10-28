@@ -87,32 +87,20 @@ export async function PUT(
   try {
     const { id } = params;
     
-    logger.info('PUT coordination attempt', {
-      coordinationId: id,
-    });
+    console.log('[PUT] Coordination update request', { id, params });
 
     const session = await getServerAuthSession();
     if (!session?.user?.email) {
-      logger.warn('PUT coordination: Unauthorized - no session email');
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    logger.info('PUT coordination: Session found', { email: session.user.email });
 
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
     });
 
     if (!user) {
-      logger.error('PUT coordination: User not found in database', { email: session.user.email });
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
-
-    logger.info('PUT coordination: User found', {
-      userId: user.id,
-      userEmail: user.email,
-      userRole: user.role,
-    });
 
     let body;
     try {
@@ -126,11 +114,6 @@ export async function PUT(
     // Admins and Organizers can access all coordinations, others only their own
     const canManageAllEvents = user.role === "ADMIN" || user.role === "ORGANIZER";
 
-    logger.info('PUT coordination: Checking permissions', {
-      canManageAllEvents,
-      coordinationId: id,
-    });
-
     // Verify the coordination belongs to the user (or user has admin/organizer privileges)
     const existingCoordination = await prisma.coordination.findFirst({
       where: {
@@ -143,15 +126,8 @@ export async function PUT(
       },
     });
 
-    logger.info('PUT coordination: Database query result', {
-      found: !!existingCoordination,
-      coordinationId: id,
-      existingCoordId: existingCoordination?.id,
-      existingEventId: existingCoordination?.eventId,
-    });
-
     if (!existingCoordination) {
-      logger.error('PUT coordination: Coordination not found', {
+      console.error('[PUT] Coordination not found', {
         coordinationId: id,
         userId: user.id,
         userEmail: user.email,
@@ -160,6 +136,11 @@ export async function PUT(
       });
       return NextResponse.json({ error: "Coordination not found" }, { status: 404 });
     }
+    
+    console.log('[PUT] Coordination found, proceeding with update', {
+      coordinationId: id,
+      title: existingCoordination.title,
+    });
 
     let newEvent = null;
     
@@ -248,7 +229,7 @@ export async function PUT(
     const duration = Date.now() - startTime;
 
     // Log successful coordination update
-    logger.info('Coordination updated', {
+    console.log('[PUT] Coordination updated successfully', {
       coordinationId: id,
       eventId: coordination.eventId,
       title: coordination.title,
@@ -312,7 +293,7 @@ export async function DELETE(
     });
 
     if (!existingCoordination) {
-      logger.warn('Coordination not found for deletion', {
+      console.error('[DELETE] Coordination not found', {
         coordinationId: id,
         userId: user.id,
         userEmail: user.email,
@@ -322,7 +303,7 @@ export async function DELETE(
     }
 
     // Log before deletion
-    logger.info('Coordination deleted', {
+    console.log('[DELETE] Coordination deleted', {
       coordinationId: id,
       eventId: existingCoordination.eventId,
       title: existingCoordination.title,

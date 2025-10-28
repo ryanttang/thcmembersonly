@@ -18,9 +18,10 @@ const createDocumentSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerAuthSession();
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -37,7 +38,7 @@ export async function GET(
     // Verify the coordination belongs to the user
     const coordination = await prisma.coordination.findFirst({
       where: {
-        id: params.id,
+        id: id,
         event: {
           ownerId: user.id,
         },
@@ -49,7 +50,7 @@ export async function GET(
     }
 
     const documents = await prisma.coordinationDocument.findMany({
-      where: { coordinationId: params.id },
+      where: { coordinationId: id },
       orderBy: { sortOrder: "asc" },
     });
 
@@ -65,9 +66,10 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerAuthSession();
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -84,7 +86,7 @@ export async function POST(
     // Verify the coordination belongs to the user
     const coordination = await prisma.coordination.findFirst({
       where: {
-        id: params.id,
+        id: id,
         event: {
           ownerId: user.id,
         },
@@ -101,7 +103,7 @@ export async function POST(
     const startTime = Date.now();
     const document = await prisma.coordinationDocument.create({
       data: {
-        coordinationId: params.id,
+        coordinationId: id,
         ...documentData,
       },
     });
@@ -110,7 +112,7 @@ export async function POST(
     // Log successful document creation
     logger.info('Coordination document created', {
       documentId: document.id,
-      coordinationId: params.id,
+      coordinationId: id,
       title: documentData.title,
       type: documentData.type,
       fileName: documentData.fileName,

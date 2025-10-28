@@ -3,15 +3,16 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { token: string } }
+  { params }: { params: Promise<{ token: string }> }
 ) {
   try {
+    const { token } = await params;
     // Try to find by slug first, then fall back to shareToken
     let coordination = await prisma.coordination.findFirst({
       where: {
         OR: [
-          { slug: params.token },
-          { shareToken: params.token }
+          { slug: token },
+          { shareToken: token }
         ],
         isActive: true,
         isArchived: false,

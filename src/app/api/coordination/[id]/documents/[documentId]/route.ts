@@ -13,9 +13,10 @@ const updateDocumentSchema = z.object({
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string; documentId: string } }
+  { params }: { params: Promise<{ id: string; documentId: string }> }
 ) {
   try {
+    const { id, documentId } = await params;
     const session = await getServerAuthSession();
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -32,7 +33,7 @@ export async function PUT(
     // Verify the coordination and document belong to the user
     const coordination = await prisma.coordination.findFirst({
       where: {
-        id: params.id,
+        id: id,
         event: {
           ownerId: user.id,
         },
@@ -48,8 +49,8 @@ export async function PUT(
 
     const document = await prisma.coordinationDocument.update({
       where: { 
-        id: params.documentId,
-        coordinationId: params.id,
+        id: documentId,
+        coordinationId: id,
       },
       data: updateData,
     });
@@ -73,9 +74,10 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string; documentId: string } }
+  { params }: { params: Promise<{ id: string; documentId: string }> }
 ) {
   try {
+    const { id, documentId } = await params;
     const session = await getServerAuthSession();
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -92,7 +94,7 @@ export async function DELETE(
     // Verify the coordination belongs to the user
     const coordination = await prisma.coordination.findFirst({
       where: {
-        id: params.id,
+        id: id,
         event: {
           ownerId: user.id,
         },
@@ -105,8 +107,8 @@ export async function DELETE(
 
     await prisma.coordinationDocument.delete({
       where: { 
-        id: params.documentId,
-        coordinationId: params.id,
+        id: documentId,
+        coordinationId: id,
       },
     });
 

@@ -25,6 +25,8 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    const { id } = params;
+    
     const session = await getServerAuthSession();
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -43,7 +45,7 @@ export async function GET(
 
     const coordination = await prisma.coordination.findFirst({
       where: {
-        id: params.id,
+        id: id,
         ...(canManageAllEvents ? {} : {
           event: {
             ownerId: user.id,
@@ -83,6 +85,14 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    const { id } = params;
+    
+    // Debug logging
+    logger.debug('PUT coordination attempt', {
+      coordinationId: id,
+      params: params,
+    });
+
     const session = await getServerAuthSession();
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -111,7 +121,7 @@ export async function PUT(
     // Verify the coordination belongs to the user (or user has admin/organizer privileges)
     const existingCoordination = await prisma.coordination.findFirst({
       where: {
-        id: params.id,
+        id: id,
         ...(canManageAllEvents ? {} : {
           event: {
             ownerId: user.id,
@@ -121,6 +131,13 @@ export async function PUT(
     });
 
     if (!existingCoordination) {
+      logger.warn('Coordination not found', {
+        coordinationId: id,
+        userId: user.id,
+        userEmail: user.email,
+        userRole: user.role,
+        canManageAllEvents,
+      });
       return NextResponse.json({ error: "Coordination not found" }, { status: 404 });
     }
 
@@ -173,10 +190,10 @@ export async function PUT(
       // Ensure slug is unique by appending numbers if needed
       while (true) {
         const existing = await prisma.coordination.findFirst({
-          where: { 
-            slug: slug,
-            id: { not: params.id } // Exclude current coordination
-          }
+        where: { 
+          slug: slug,
+          id: { not: id } // Exclude current coordination
+        }
         });
         
         if (!existing) {
@@ -193,7 +210,7 @@ export async function PUT(
 
     const startTime = Date.now();
     const coordination = await prisma.coordination.update({
-      where: { id: params.id },
+      where: { id: id },
       data: updateData,
       include: {
         event: {
@@ -212,7 +229,7 @@ export async function PUT(
 
     // Log successful coordination update
     logger.info('Coordination updated', {
-      coordinationId: params.id,
+      coordinationId: id,
       eventId: coordination.eventId,
       title: coordination.title,
       userId: user.id,
@@ -244,6 +261,8 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    const { id } = params;
+    
     const session = await getServerAuthSession();
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -263,7 +282,7 @@ export async function DELETE(
     // Verify the coordination belongs to the user (or user has admin/organizer privileges)
     const existingCoordination = await prisma.coordination.findFirst({
       where: {
-        id: params.id,
+        id: id,
         ...(canManageAllEvents ? {} : {
           event: {
             ownerId: user.id,
@@ -273,12 +292,18 @@ export async function DELETE(
     });
 
     if (!existingCoordination) {
+      logger.warn('Coordination not found for deletion', {
+        coordinationId: id,
+        userId: user.id,
+        userEmail: user.email,
+        userRole: user.role,
+      });
       return NextResponse.json({ error: "Coordination not found" }, { status: 404 });
     }
 
     // Log before deletion
     logger.info('Coordination deleted', {
-      coordinationId: params.id,
+      coordinationId: id,
       eventId: existingCoordination.eventId,
       title: existingCoordination.title,
       userId: user.id,
@@ -287,7 +312,7 @@ export async function DELETE(
     });
 
     await prisma.coordination.delete({
-      where: { id: params.id },
+      where: { id: id },
     });
 
     return NextResponse.json({ success: true });

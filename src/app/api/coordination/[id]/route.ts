@@ -114,17 +114,38 @@ export async function PUT(
     // Admins and Organizers can access all coordinations, others only their own
     const canManageAllEvents = user.role === "ADMIN" || user.role === "ORGANIZER";
 
-    // Verify the coordination belongs to the user (or user has admin/organizer privileges)
-    const existingCoordination = await prisma.coordination.findFirst({
-      where: {
-        id: id,
-        ...(canManageAllEvents ? {} : {
+    // Try to find the coordination with appropriate permissions
+    let existingCoordination = null;
+    
+    if (canManageAllEvents) {
+      // For admins/organizers, try without ownership check first
+      existingCoordination = await prisma.coordination.findUnique({
+        where: { id: id },
+      });
+      
+      console.log('[PUT] Admin lookup result', {
+        found: !!existingCoordination,
+        coordinationId: id,
+      });
+    }
+    
+    // If not found as admin, try with ownership check
+    if (!existingCoordination) {
+      existingCoordination = await prisma.coordination.findFirst({
+        where: {
+          id: id,
           event: {
             ownerId: user.id,
           },
-        }),
-      },
-    });
+        },
+      });
+      
+      console.log('[PUT] Owner lookup result', {
+        found: !!existingCoordination,
+        coordinationId: id,
+        userId: user.id,
+      });
+    }
 
     if (!existingCoordination) {
       console.error('[PUT] Coordination not found', {
@@ -140,6 +161,7 @@ export async function PUT(
     console.log('[PUT] Coordination found, proceeding with update', {
       coordinationId: id,
       title: existingCoordination.title,
+      eventId: existingCoordination.eventId,
     });
 
     let newEvent = null;

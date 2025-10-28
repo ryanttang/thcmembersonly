@@ -87,24 +87,32 @@ export async function PUT(
   try {
     const { id } = params;
     
-    // Debug logging
-    logger.debug('PUT coordination attempt', {
+    logger.info('PUT coordination attempt', {
       coordinationId: id,
-      params: params,
     });
 
     const session = await getServerAuthSession();
     if (!session?.user?.email) {
+      logger.warn('PUT coordination: Unauthorized - no session email');
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    logger.info('PUT coordination: Session found', { email: session.user.email });
 
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
     });
 
     if (!user) {
+      logger.error('PUT coordination: User not found in database', { email: session.user.email });
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
+
+    logger.info('PUT coordination: User found', {
+      userId: user.id,
+      userEmail: user.email,
+      userRole: user.role,
+    });
 
     let body;
     try {
@@ -118,6 +126,11 @@ export async function PUT(
     // Admins and Organizers can access all coordinations, others only their own
     const canManageAllEvents = user.role === "ADMIN" || user.role === "ORGANIZER";
 
+    logger.info('PUT coordination: Checking permissions', {
+      canManageAllEvents,
+      coordinationId: id,
+    });
+
     // Verify the coordination belongs to the user (or user has admin/organizer privileges)
     const existingCoordination = await prisma.coordination.findFirst({
       where: {
@@ -130,8 +143,15 @@ export async function PUT(
       },
     });
 
+    logger.info('PUT coordination: Database query result', {
+      found: !!existingCoordination,
+      coordinationId: id,
+      existingCoordId: existingCoordination?.id,
+      existingEventId: existingCoordination?.eventId,
+    });
+
     if (!existingCoordination) {
-      logger.warn('Coordination not found', {
+      logger.error('PUT coordination: Coordination not found', {
         coordinationId: id,
         userId: user.id,
         userEmail: user.email,

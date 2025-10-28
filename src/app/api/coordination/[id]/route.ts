@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
 import { z } from "zod";
 
-// Force rebuild for Vercel deployment
+// Force rebuild for Vercel deployment - updated Oct 28, 2024
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -356,10 +356,10 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = await params;
+    const { id } = params;
     
     const session = await getServerAuthSession();
     if (!session?.user?.email) {

@@ -38,12 +38,17 @@ export async function GET(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
+    // Admins and Organizers can access all coordinations, others only their own
+    const canManageAllEvents = user.role === "ADMIN" || user.role === "ORGANIZER";
+
     const coordination = await prisma.coordination.findFirst({
       where: {
         id: params.id,
-        event: {
-          ownerId: user.id,
-        },
+        ...(canManageAllEvents ? {} : {
+          event: {
+            ownerId: user.id,
+          },
+        }),
       },
       include: {
         event: {
@@ -100,13 +105,18 @@ export async function PUT(
     
     const updateData = updateCoordinationSchema.parse(body);
 
-    // Verify the coordination belongs to the user
+    // Admins and Organizers can access all coordinations, others only their own
+    const canManageAllEvents = user.role === "ADMIN" || user.role === "ORGANIZER";
+
+    // Verify the coordination belongs to the user (or user has admin/organizer privileges)
     const existingCoordination = await prisma.coordination.findFirst({
       where: {
         id: params.id,
-        event: {
-          ownerId: user.id,
-        },
+        ...(canManageAllEvents ? {} : {
+          event: {
+            ownerId: user.id,
+          },
+        }),
       },
     });
 
@@ -118,8 +128,6 @@ export async function PUT(
     
     // If eventId is being updated, verify the new event exists and user has permission
     if (updateData.eventId && updateData.eventId !== existingCoordination.eventId) {
-      const canManageAllEvents = user.role === "ADMIN" || user.role === "ORGANIZER";
-      
       newEvent = await prisma.event.findFirst({
         where: {
           id: updateData.eventId,
@@ -249,13 +257,18 @@ export async function DELETE(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Verify the coordination belongs to the user
+    // Admins and Organizers can access all coordinations, others only their own
+    const canManageAllEvents = user.role === "ADMIN" || user.role === "ORGANIZER";
+
+    // Verify the coordination belongs to the user (or user has admin/organizer privileges)
     const existingCoordination = await prisma.coordination.findFirst({
       where: {
         id: params.id,
-        event: {
-          ownerId: user.id,
-        },
+        ...(canManageAllEvents ? {} : {
+          event: {
+            ownerId: user.id,
+          },
+        }),
       },
     });
 

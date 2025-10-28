@@ -85,9 +85,15 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
+    const paramsData = await params;
+    const { id } = paramsData;
     
-    console.log('[PUT] Coordination update request', { id, params });
+    console.log('[PUT] Coordination update request START', {
+      id,
+      paramsData,
+      requestUrl: request.url,
+      method: request.method,
+    });
 
     const session = await getServerAuthSession();
     if (!session?.user?.email) {
@@ -96,6 +102,13 @@ export async function PUT(
 
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
+    });
+
+    console.log('[PUT] User lookup', { 
+      found: !!user,
+      userId: user?.id,
+      userEmail: user?.email,
+      userRole: user?.role,
     });
 
     if (!user) {
@@ -111,14 +124,23 @@ export async function PUT(
     
     const updateData = updateCoordinationSchema.parse(body);
 
+    console.log('[PUT] Request body parsed', { updateData });
+
     // Admins and Organizers can access all coordinations, others only their own
     const canManageAllEvents = user.role === "ADMIN" || user.role === "ORGANIZER";
+
+    console.log('[PUT] Permission check', {
+      canManageAllEvents,
+      userRole: user.role,
+      coordinationId: id,
+    });
 
     // Try to find the coordination with appropriate permissions
     let existingCoordination = null;
     
     if (canManageAllEvents) {
       // For admins/organizers, look up without ownership check
+      console.log('[PUT] Attempting admin lookup', { coordinationId: id });
       existingCoordination = await prisma.coordination.findUnique({
         where: { id: id },
         include: {
@@ -129,9 +151,15 @@ export async function PUT(
       console.log('[PUT] Admin lookup result', {
         found: !!existingCoordination,
         coordinationId: id,
+        coordinationTitle: existingCoordination?.title,
+        eventId: existingCoordination?.eventId,
       });
     } else {
       // For regular users, must be owner of the event
+      console.log('[PUT] Attempting owner lookup', { 
+        coordinationId: id,
+        userId: user.id,
+      });
       existingCoordination = await prisma.coordination.findFirst({
         where: {
           id: id,
@@ -148,18 +176,48 @@ export async function PUT(
         found: !!existingCoordination,
         coordinationId: id,
         userId: user.id,
+        coordinationTitle: existingCoordination?.title,
+        eventId: existingCoordination?.eventId,
       });
     }
 
     if (!existingCoordination) {
-      console.error('[PUT] Coordination not found', {
+      console.error('[PUT] Coordination not found - DETAILED DEBUG', {
         coordinationId: id,
         userId: user.id,
         userEmail: user.email,
         userRole: user.role,
         canManageAllEvents,
+        requestUrl: request.url,
+        timestamp: new Date().toISOString(),
       });
-      return NextResponse.json({ error: "Coordination not found" }, { status: 404 });
+      
+      // Try a direct database check to see if coordination exists at all
+      const directCheck = await prisma.coordination.findUnique({
+        where: { id: id },
+        select: { 
+          id: true, 
+          title: true, 
+          eventId: true,
+          event: {
+            select: { id: true, title: true, ownerId: true }
+          }
+        }
+      });
+      
+      console.error('[PUT] Direct database check', { 
+        exists: !!directCheck,
+        coordination: directCheck,
+      });
+      
+      return NextResponse.json({ 
+        error: "Coordination not found",
+        details: {
+          coordinationId: id,
+          userRole: user.role,
+          coordinationExists: !!directCheck,
+        }
+      }, { status: 404 });
     }
     
     console.log('[PUT] Coordination found, proceeding with update', {
@@ -266,6 +324,14 @@ export async function PUT(
 
     return NextResponse.json(coordination);
   } catch (error) {
+    console.error('[PUT] Error updating coordination - DETAILED', {
+      error,
+      errorName: error?.constructor?.name,
+      errorMessage: error instanceof Error ? error.message : String(error),
+      errorStack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString(),
+    });
+    
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Invalid input", details: error.errors },
@@ -273,9 +339,11 @@ export async function PUT(
       );
     }
 
-    console.error("Error updating coordination:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { 
+        error: "Internal server error",
+        message: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }

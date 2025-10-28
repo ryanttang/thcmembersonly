@@ -107,3 +107,4 @@ prisma/migrations/
 # Uploads (if you want to exclude uploaded files)
 uploads/
 public/uploads/
+.env.vercel

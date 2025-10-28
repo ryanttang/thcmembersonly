@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
 import { z } from "zod";
 
+// Force rebuild for Vercel deployment
+
 const updateCoordinationSchema = z.object({
   eventId: z.string().min(1).optional(),
   title: z.string().min(1).optional(),

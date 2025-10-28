@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerAuthSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { logger } from "@/lib/logger";
 import { z } from "zod";
 
 const updateCoordinationSchema = z.object({
@@ -176,6 +177,7 @@ export async function PUT(
       updateData.slug = slug;
     }
 
+    const startTime = Date.now();
     const coordination = await prisma.coordination.update({
       where: { id: params.id },
       data: updateData,
@@ -191,6 +193,19 @@ export async function PUT(
           orderBy: { sortOrder: "asc" },
         },
       },
+    });
+    const duration = Date.now() - startTime;
+
+    // Log successful coordination update
+    logger.info('Coordination updated', {
+      coordinationId: params.id,
+      eventId: coordination.eventId,
+      title: coordination.title,
+      userId: user.id,
+      userEmail: user.email,
+      userRole: user.role,
+      duration: `${duration}ms`,
+      changes: Object.keys(updateData),
     });
 
     return NextResponse.json(coordination);
@@ -241,6 +256,16 @@ export async function DELETE(
     if (!existingCoordination) {
       return NextResponse.json({ error: "Coordination not found" }, { status: 404 });
     }
+
+    // Log before deletion
+    logger.info('Coordination deleted', {
+      coordinationId: params.id,
+      eventId: existingCoordination.eventId,
+      title: existingCoordination.title,
+      userId: user.id,
+      userEmail: user.email,
+      userRole: user.role,
+    });
 
     await prisma.coordination.delete({
       where: { id: params.id },

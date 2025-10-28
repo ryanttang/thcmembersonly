@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerAuthSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { logger } from "@/lib/logger";
 import { z } from "zod";
 import { CoordinationDocumentType } from "@prisma/client";
 
@@ -97,11 +98,27 @@ export async function POST(
     const body = await request.json();
     const documentData = createDocumentSchema.parse(body);
 
+    const startTime = Date.now();
     const document = await prisma.coordinationDocument.create({
       data: {
         coordinationId: params.id,
         ...documentData,
       },
+    });
+    const duration = Date.now() - startTime;
+
+    // Log successful document creation
+    logger.info('Coordination document created', {
+      documentId: document.id,
+      coordinationId: params.id,
+      title: documentData.title,
+      type: documentData.type,
+      fileName: documentData.fileName,
+      fileSize: documentData.fileSize,
+      userId: user.id,
+      userEmail: user.email,
+      userRole: user.role,
+      duration: `${duration}ms`,
     });
 
     return NextResponse.json(document, { status: 201 });

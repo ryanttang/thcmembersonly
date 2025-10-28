@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerAuthSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { logger } from "@/lib/logger";
 import { z } from "zod";
 
 const createCoordinationSchema = z.object({
@@ -156,6 +157,7 @@ export async function POST(request: NextRequest) {
       counter++;
     }
 
+    const startTime = Date.now();
     const coordination = await prisma.coordination.create({
       data: {
         eventId,
@@ -176,6 +178,18 @@ export async function POST(request: NextRequest) {
         },
         documents: true,
       },
+    });
+    const duration = Date.now() - startTime;
+
+    // Log successful coordination creation
+    logger.info('Coordination created', {
+      coordinationId: coordination.id,
+      eventId,
+      title,
+      userId: user.id,
+      userEmail: user.email,
+      userRole: user.role,
+      duration: `${duration}ms`,
     });
 
     return NextResponse.json(coordination, { status: 201 });

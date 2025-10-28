@@ -6,6 +6,10 @@ import { z } from "zod";
 
 // Force rebuild for Vercel deployment
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 const updateCoordinationSchema = z.object({
   eventId: z.string().min(1).optional(),
   title: z.string().min(1).optional(),

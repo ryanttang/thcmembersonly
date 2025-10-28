@@ -4,6 +4,9 @@ import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
 import { z } from "zod";
 
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 const createCoordinationSchema = z.object({
   eventId: z.string().min(1),
   title: z.string().min(1),

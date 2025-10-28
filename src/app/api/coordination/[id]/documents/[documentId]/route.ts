@@ -13,10 +13,10 @@ const updateDocumentSchema = z.object({
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string; documentId: string } }
+  { params }: { params: Promise<{ id: string; documentId: string }> }
 ) {
   try {
-    const { id, documentId } = params;
+    const { id, documentId } = await params;
     const session = await getServerAuthSession();
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -74,10 +74,10 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string; documentId: string } }
+  { params }: { params: Promise<{ id: string; documentId: string }> }
 ) {
   try {
-    const { id, documentId } = params;
+    const { id, documentId } = await params;
     const session = await getServerAuthSession();
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

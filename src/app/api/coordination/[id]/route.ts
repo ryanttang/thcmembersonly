@@ -91,7 +91,13 @@ export async function PUT(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const body = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch (error) {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
+    
     const updateData = updateCoordinationSchema.parse(body);
 
     // Verify the coordination belongs to the user

@@ -74,7 +74,7 @@ export default function CoordinationForm({
       const submitData = {
         ...formData,
         pointOfContacts: formData.pointOfContacts.filter((contact: any) => 
-          contact.name.trim() || contact.number.trim() || contact.email.trim()
+          (contact.name?.trim() || "") || (contact.number?.trim() || "") || (contact.email?.trim() || "")
         )
       };
 

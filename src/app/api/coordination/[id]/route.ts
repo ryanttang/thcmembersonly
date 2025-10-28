@@ -22,10 +22,10 @@ const updateCoordinationSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = await params;
+    const { id } = params;
     
     const session = await getServerAuthSession();
     if (!session?.user?.email) {
@@ -82,15 +82,14 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const paramsData = await params;
-    const { id } = paramsData;
+    const { id } = params;
     
     console.log('[PUT] Coordination update request START', {
       id,
-      paramsData,
+      params,
       requestUrl: request.url,
       method: request.method,
     });
@@ -351,10 +350,10 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = await params;
+    const { id } = params;
     
     const session = await getServerAuthSession();
     if (!session?.user?.email) {

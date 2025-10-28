@@ -118,25 +118,29 @@ export async function PUT(
     let existingCoordination = null;
     
     if (canManageAllEvents) {
-      // For admins/organizers, try without ownership check first
+      // For admins/organizers, look up without ownership check
       existingCoordination = await prisma.coordination.findUnique({
         where: { id: id },
+        include: {
+          event: true,
+        },
       });
       
       console.log('[PUT] Admin lookup result', {
         found: !!existingCoordination,
         coordinationId: id,
       });
-    }
-    
-    // If not found as admin, try with ownership check
-    if (!existingCoordination) {
+    } else {
+      // For regular users, must be owner of the event
       existingCoordination = await prisma.coordination.findFirst({
         where: {
           id: id,
           event: {
             ownerId: user.id,
           },
+        },
+        include: {
+          event: true,
         },
       });
       
@@ -193,9 +197,7 @@ export async function PUT(
       };
 
       // Get the event (either updated or existing)
-      const eventForSlug = newEvent || await prisma.event.findUnique({
-        where: { id: newEvent?.id || existingCoordination.eventId }
-      });
+      const eventForSlug = newEvent || existingCoordination.event;
       
       if (!eventForSlug) {
         return NextResponse.json({ error: "Event not found" }, { status: 404 });
@@ -213,10 +215,10 @@ export async function PUT(
       // Ensure slug is unique by appending numbers if needed
       while (true) {
         const existing = await prisma.coordination.findFirst({
-        where: { 
-          slug: slug,
-          id: { not: id } // Exclude current coordination
-        }
+          where: { 
+            slug: slug,
+            id: { not: id } // Exclude current coordination
+          }
         });
         
         if (!existing) {

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getServerAuthSession } from "@/lib/auth";
 import { updateEventSchema } from "@/lib/validation";
@@ -98,7 +99,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       updateData.endAt = new Date(updateData.endAt);
     }
 
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       await tx.event.update({ where: { id: params.id }, data: updateData });
 
       // Handle hero image assignment/removal within the transaction

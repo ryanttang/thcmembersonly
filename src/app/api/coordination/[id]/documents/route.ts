@@ -35,15 +35,13 @@ export async function GET(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Verify the coordination belongs to the user
-    const coordination = await prisma.coordination.findFirst({
-      where: {
-        id: id,
-        event: {
-          ownerId: user.id,
-        },
-      },
-    });
+    // Admins, Organizers, and Staff can access all coordinations
+    const canManageAllEvents = ["ADMIN", "ORGANIZER", "STAFF"].includes(user.role as any);
+    const coordination = canManageAllEvents
+      ? await prisma.coordination.findUnique({ where: { id } })
+      : await prisma.coordination.findFirst({
+          where: { id, event: { ownerId: user.id } },
+        });
 
     if (!coordination) {
       return NextResponse.json({ error: "Coordination not found" }, { status: 404 });

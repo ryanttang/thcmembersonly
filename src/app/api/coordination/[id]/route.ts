@@ -46,8 +46,8 @@ export async function GET(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Admins and Organizers can access all coordinations, others only their own
-    const canManageAllEvents = user.role === "ADMIN" || user.role === "ORGANIZER";
+    // Admins, Organizers, and Staff can access all coordinations, others only their own
+    const canManageAllEvents = ["ADMIN", "ORGANIZER", "STAFF"].includes(user.role as any);
 
     const coordination = await prisma.coordination.findFirst({
       where: {
@@ -131,8 +131,8 @@ export async function PUT(
 
     console.log('[PUT] Request body parsed', { updateData });
 
-    // Admins and Organizers can access all coordinations, others only their own
-    const canManageAllEvents = user.role === "ADMIN" || user.role === "ORGANIZER";
+    // Admins, Organizers, and Staff can access all coordinations, others only their own
+    const canManageAllEvents = ["ADMIN", "ORGANIZER", "STAFF"].includes(user.role as any);
 
     console.log('[PUT] Permission check', {
       canManageAllEvents,
@@ -384,8 +384,8 @@ export async function DELETE(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Admins and Organizers can access all coordinations, others only their own
-    const canManageAllEvents = user.role === "ADMIN" || user.role === "ORGANIZER";
+    // Admins, Organizers, and Staff can access all coordinations, others only their own
+    const canManageAllEvents = ["ADMIN", "ORGANIZER", "STAFF"].includes(user.role as any);
 
     // Verify the coordination belongs to the user (or user has admin/organizer privileges)
     const existingCoordination = await prisma.coordination.findFirst({

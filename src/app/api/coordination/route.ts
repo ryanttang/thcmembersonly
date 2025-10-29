@@ -115,8 +115,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { eventId, title, description, notes, specialMessage, pointOfContacts } = createCoordinationSchema.parse(body);
 
-    // Admins and Organizers can create coordinations for any event
-    const canManageAllEvents = user.role === "ADMIN" || user.role === "ORGANIZER";
+    // Admins, Organizers, and Staff can create coordinations for any event
+    const canManageAllEvents = ["ADMIN", "ORGANIZER", "STAFF"].includes(user.role as any);
 
     // Verify the event exists and user has permission to access it
     const event = await prisma.event.findFirst({

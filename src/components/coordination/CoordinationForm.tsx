@@ -78,6 +78,12 @@ export default function CoordinationForm({
   useEffect(() => {
     if (coordination) {
       const parsedContacts = parsePointOfContacts(coordination.pointOfContacts);
+      console.log('CoordinationForm: Setting form data from coordination', {
+        id: coordination.id,
+        specialMessage: coordination.specialMessage,
+        pointOfContacts: coordination.pointOfContacts,
+        parsedContacts,
+      });
       setFormData({
         eventId: coordination.eventId || "",
         title: coordination.title || "",
@@ -147,8 +153,7 @@ export default function CoordinationForm({
         setCreatedCoordinationId(result.id);
         // Don't close modal or call onSuccess yet - let user upload documents
       } else {
-        // For editing, close modal and refresh
-        onClose();
+        // For editing, call onSuccess (parent modal will handle closing)
         if (onSuccess) onSuccess();
       }
       
@@ -216,38 +221,12 @@ export default function CoordinationForm({
     setCreatedCoordinationId(null);
   };
 
-  return (
+  // Render form content (used when embedded in another modal like CoordinationCard)
+  const renderFormContent = () => (
     <>
-      <Button 
-        onClick={onOpen}
-        colorScheme="blue"
-        size={{ base: "md", md: "lg" }}
-        px={{ base: 4, md: 10 }}
-        py={{ base: 3, md: 5 }}
-        minW={{ base: "100%", md: "220px" }}
-        w={{ base: "100%", md: "auto" }}
-        fontSize={{ base: "0.95em", md: "md" }}
-        whiteSpace="nowrap"
-        _hover={{
-          transform: "translateY(-1px)",
-          shadow: "lg"
-        }}
-        transition="all 0.2s"
-      >
-        {coordination ? "Edit Coordination" : "Create Coordination Set"}
-      </Button>
-
-      <Modal isOpen={isOpen} onClose={onClose} size="xl">
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader fontFamily="'SUSE Mono', monospace" fontWeight="600">
-            {coordination ? "Edit Coordination Set" : "Create Coordination Set"}
-          </ModalHeader>
-          <ModalCloseButton />
-          <ModalBody pb={6}>
-            {!createdCoordinationId ? (
-              // Show form for creating/editing coordination
-              <form onSubmit={handleSubmit}>
+      {!createdCoordinationId ? (
+        // Show form for creating/editing coordination
+        <form onSubmit={handleSubmit}>
                 <VStack spacing={4}>
                   <FormControl isRequired>
                     <FormLabel>Event</FormLabel>
@@ -418,6 +397,45 @@ export default function CoordinationForm({
                 </Box>
               </VStack>
             )}
+      </>
+  );
+
+  // If coordination prop exists, we're in edit mode and should render form directly (no button/modal wrapper)
+  if (coordination) {
+    return renderFormContent();
+  }
+
+  // Otherwise, render with button and modal for create mode
+  return (
+    <>
+      <Button 
+        onClick={onOpen}
+        colorScheme="blue"
+        size={{ base: "md", md: "lg" }}
+        px={{ base: 4, md: 10 }}
+        py={{ base: 3, md: 5 }}
+        minW={{ base: "100%", md: "220px" }}
+        w={{ base: "100%", md: "auto" }}
+        fontSize={{ base: "0.95em", md: "md" }}
+        whiteSpace="nowrap"
+        _hover={{
+          transform: "translateY(-1px)",
+          shadow: "lg"
+        }}
+        transition="all 0.2s"
+      >
+        Create Coordination Set
+      </Button>
+
+      <Modal isOpen={isOpen} onClose={onClose} size="xl">
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader fontFamily="'SUSE Mono', monospace" fontWeight="600">
+            Create Coordination Set
+          </ModalHeader>
+          <ModalCloseButton />
+          <ModalBody pb={6}>
+            {renderFormContent()}
           </ModalBody>
         </ModalContent>
       </Modal>

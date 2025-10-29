@@ -398,6 +398,7 @@ export default function CoordinationCard({ coordination, events }: CoordinationC
           <ModalCloseButton />
           <ModalBody pb={6}>
             <CoordinationForm 
+              key={coordination.id}
               coordination={coordination}
               events={events}
               onSuccess={() => {

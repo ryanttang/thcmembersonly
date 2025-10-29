@@ -102,29 +102,15 @@ class RedisCache implements CacheLike {
     if (!redis) return;
     const payload = JSON.stringify(value);
     const ttlMs = ttl || this.defaultTTL;
-    // psetex key ttl value
-    // @upstash/redis: set with PX option achieved via set with px
-    // But redis client exposes set with expiration options; fallback to two-step if unavailable
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const client: any = redis as any;
-    if (client.set) {
-      await client.set(this.k(key), payload, { px: ttlMs });
-    } else if (client.psetex) {
-      await client.psetex(this.k(key), ttlMs, payload);
-    } else {
-      await client.set(this.k(key), payload);
-      await client.pexpire(this.k(key), ttlMs);
-    }
+    await redis.set(this.k(key), payload, { px: ttlMs });
   }
 
   async get<T>(key: string): Promise<T | null> {
     if (!redis) return null;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const client: any = redis as any;
-    const raw = await client.get(this.k(key));
+    const raw = await redis.get(this.k(key));
     if (!raw) return null;
     try {
-      return typeof raw === 'string' ? (JSON.parse(raw) as T) : (raw as T);
+      return JSON.parse(raw) as T;
     } catch {
       return null;
     }
@@ -132,48 +118,42 @@ class RedisCache implements CacheLike {
 
   async delete(key: string): Promise<boolean> {
     if (!redis) return false;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const client: any = redis as any;
-    const res = await client.del(this.k(key));
-    return (res as number) > 0;
+    const res = await redis.del(this.k(key));
+    return res > 0;
   }
 
   async clear(): Promise<void> {
     if (!redis) return;
-    // Upstash supports scan; but @upstash/redis provides scan via "scan" command
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const client: any = redis as any;
     let cursor = 0;
     const pattern = `${this.prefix}:*`;
+    const keysToDelete: string[] = [];
     do {
-      const reply = await client.scan(cursor, { match: pattern, count: 100 });
+      const reply = await redis.scan(cursor, { match: pattern, count: 100 });
       cursor = reply[0];
-      const keys: string[] = reply[1] || [];
-      if (keys.length > 0) {
-        await client.del(...keys);
-      }
+      const keys = reply[1] || [];
+      keysToDelete.push(...keys);
     } while (cursor !== 0);
+    
+    if (keysToDelete.length > 0) {
+      await redis.del(keysToDelete);
+    }
   }
 
   async has(key: string): Promise<boolean> {
     if (!redis) return false;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const client: any = redis as any;
-    const ttl = await client.pttl(this.k(key));
-    return typeof ttl === 'number' && ttl > 0;
+    const ttl = await redis.pttl(this.k(key));
+    return ttl > 0;
   }
 
   async size(): Promise<number> {
     if (!redis) return 0;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const client: any = redis as any;
     let cursor = 0;
     let count = 0;
     const pattern = `${this.prefix}:*`;
     do {
-      const reply = await client.scan(cursor, { match: pattern, count: 100 });
+      const reply = await redis.scan(cursor, { match: pattern, count: 100 });
       cursor = reply[0];
-      const keys: string[] = reply[1] || [];
+      const keys = reply[1] || [];
       count += keys.length;
     } while (cursor !== 0);
     return count;

@@ -1,5 +1,3 @@
-import { env } from '@/lib/env';
-
 // Prefer Upstash REST (serverless friendly). If not configured, export null.
 let redisClient: any = null;
 
@@ -9,7 +7,6 @@ try {
 
   if (upstashUrl && upstashToken) {
     // Lazy import to avoid bundling when unused
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { Redis } = require('@upstash/redis');
     redisClient = new Redis({ url: upstashUrl, token: upstashToken });
   }
@@ -22,7 +19,10 @@ export const redis = redisClient as
       incr: (key: string) => Promise<number>;
       pexpire: (key: string, ttlMs: number) => Promise<unknown>;
       pttl: (key: string) => Promise<number>;
-      del: (key: string) => Promise<unknown>;
+      del: (key: string | string[]) => Promise<number>;
+      set: (key: string, value: string, options?: { px?: number }) => Promise<string>;
+      get: (key: string) => Promise<string | null>;
+      scan: (cursor: number, options?: { match?: string; count?: number }) => Promise<[number, string[]]>;
     }
   | null;
 

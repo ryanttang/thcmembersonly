@@ -122,6 +122,15 @@ const nextConfig = {
       },
     ];
   },
+  // Next.js rewrites (Vercel respects these for Next projects)
+  async rewrites() {
+    return [
+      {
+        source: '/api/coordination/:id',
+        destination: '/api/coordination/id/:id',
+      },
+    ];
+  },
   // Bundle analyzer (optional)
   ...(process.env.ANALYZE === 'true' && {
     webpack: (config) => {

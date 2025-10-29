@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Button,
   Modal,
@@ -58,6 +58,20 @@ export default function CoordinationForm({
     pointOfContacts: coordination?.pointOfContacts || [],
   });
   const toast = useToast();
+
+  // Sync form state whenever coordination prop changes (works both inline and modal usage)
+  useEffect(() => {
+    if (coordination) {
+      setFormData({
+        eventId: coordination.eventId || "",
+        title: coordination.title || "",
+        description: coordination.description || "",
+        notes: coordination.notes || "",
+        specialMessage: coordination.specialMessage || "",
+        pointOfContacts: coordination.pointOfContacts || [],
+      });
+    }
+  }, [coordination]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

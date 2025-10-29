@@ -176,7 +176,13 @@ export async function PUT(
       existingCoordination = await prisma.coordination.findUnique({
         where: { id: id },
         include: {
-          event: true,
+          event: {
+            select: {
+              id: true,
+              title: true,
+              ownerId: true,
+            },
+          },
         },
       });
       
@@ -203,7 +209,13 @@ export async function PUT(
           },
         },
         include: {
-          event: true,
+          event: {
+            select: {
+              id: true,
+              title: true,
+              ownerId: true,
+            },
+          },
         },
       });
       

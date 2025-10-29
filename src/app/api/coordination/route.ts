@@ -40,8 +40,8 @@ export async function GET(request: NextRequest) {
     const owner = searchParams.get("owner"); // Allow admin to specify owner filter
     const includeArchived = searchParams.get("includeArchived") === "true";
 
-    // Admins and Organizers can see all coordinations, others only see their own
-    const canManageAllEvents = user.role === "ADMIN" || user.role === "ORGANIZER";
+    // Admins, Organizers, and Staff can see all coordinations, others only see their own
+    const canManageAllEvents = ["ADMIN", "ORGANIZER", "STAFF"].includes(user.role as any);
 
     let whereClause: any = {
       ...(canManageAllEvents && owner !== "me" ? {} : { event: { ownerId: user.id } }),

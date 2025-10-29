@@ -155,19 +155,6 @@ export async function PUT(
     });
 
     // Try to find the coordination with appropriate permissions
-    // FIRST: Check if coordination exists at all, regardless of permissions
-    const coordinationExists = await prisma.coordination.findUnique({
-      where: { id: id },
-      select: { id: true, title: true, eventId: true },
-    });
-    
-    console.log('[PUT] Coordination existence check', {
-      exists: !!coordinationExists,
-      coordinationId: id,
-      title: coordinationExists?.title,
-      eventId: coordinationExists?.eventId,
-    });
-
     let existingCoordination = null;
     
     if (canManageAllEvents) {
@@ -228,6 +215,32 @@ export async function PUT(
         eventId: existingCoordination?.eventId,
         hasEvent: !!existingCoordination?.event,
       });
+    }
+    
+    // If lookup failed but user has permission, do a direct check
+    if (!existingCoordination && canManageAllEvents) {
+      const directCheck = await prisma.coordination.findUnique({
+        where: { id: id },
+        select: { id: true, title: true, eventId: true },
+      });
+      console.error('[PUT] Coordination exists but include failed', { 
+        exists: !!directCheck,
+        coordinationId: id,
+        title: directCheck?.title,
+        eventId: directCheck?.eventId,
+      });
+      // If it exists, do a simpler query without include
+      if (directCheck) {
+        existingCoordination = await prisma.coordination.findUnique({
+          where: { id: id },
+        }) as any;
+        if (existingCoordination && directCheck.eventId) {
+          existingCoordination.event = await prisma.event.findUnique({
+            where: { id: directCheck.eventId },
+            select: { id: true, title: true, ownerId: true },
+          });
+        }
+      }
     }
 
     if (!existingCoordination) {

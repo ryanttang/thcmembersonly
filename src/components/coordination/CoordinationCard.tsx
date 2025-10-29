@@ -133,7 +133,7 @@ export default function CoordinationCard({ coordination, events }: CoordinationC
 
     setIsArchiving(true);
     try {
-      const response = await fetch(`/api/coordination/${coordination.id}`, {
+      const response = await fetch(`/api/coordination/id/${coordination.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

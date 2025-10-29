@@ -25,6 +25,9 @@ import {
   TabPanel,
   Box,
   Text,
+  Alert,
+  AlertIcon,
+  AlertDescription,
 } from "@chakra-ui/react";
 import DocumentUploader from "./DocumentUploader";
 
@@ -414,26 +417,25 @@ export default function CoordinationForm({
       </>
   );
 
-  // If coordination prop exists, we're in edit mode and should render form directly (no button/modal wrapper)
-  // This component is embedded in CoordinationCard's modal, so we just return the form content
-  if (isEditMode) {
-    console.log('CoordinationForm: Rendering form directly in edit mode', {
-      coordinationId: coordination.id,
-      hasSpecialMessage: !!coordination.specialMessage,
-      hasPointOfContacts: !!coordination.pointOfContacts,
-      formDataSpecialMessage: formData.specialMessage,
-      formDataPointOfContacts: formData.pointOfContacts,
-    });
-    return renderFormContent();
-  }
+  // SIMPLIFIED: If coordination exists, ALWAYS render form (edit mode)
+  // If no coordination, render button + modal (create mode)
+  // NO conditional returns before this - all hooks must run first
   
-  console.log('CoordinationForm: Rendering with button/modal (create mode)', {
-    hasCoordination: !!coordination,
-    coordinationId: coordination?.id,
-    isEditMode,
-  });
+  // Edit mode: render form directly (used inside CoordinationCard modal)
+  if (coordination?.id) {
+    // FORCE DISPLAY: Add visible indicator to verify this code path is executing
+    return (
+      <Box>
+        <Alert status="info" mb={4} display="none">
+          <AlertIcon />
+          <AlertDescription>Edit mode active - form should be visible</AlertDescription>
+        </Alert>
+        {renderFormContent()}
+      </Box>
+    );
+  }
 
-  // Otherwise, render with button and modal for create mode
+  // Create mode: render button and modal
   return (
     <>
       <Button 

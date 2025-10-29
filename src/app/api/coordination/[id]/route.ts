@@ -155,11 +155,24 @@ export async function PUT(
     });
 
     // Try to find the coordination with appropriate permissions
+    // FIRST: Check if coordination exists at all, regardless of permissions
+    const coordinationExists = await prisma.coordination.findUnique({
+      where: { id: id },
+      select: { id: true, title: true, eventId: true },
+    });
+    
+    console.log('[PUT] Coordination existence check', {
+      exists: !!coordinationExists,
+      coordinationId: id,
+      title: coordinationExists?.title,
+      eventId: coordinationExists?.eventId,
+    });
+
     let existingCoordination = null;
     
     if (canManageAllEvents) {
-      // For admins/organizers, look up without ownership check
-      console.log('[PUT] Attempting admin lookup', { coordinationId: id });
+      // For admins/organizers/staff, look up without ownership check
+      console.log('[PUT] Attempting admin lookup', { coordinationId: id, userRole: user.role });
       existingCoordination = await prisma.coordination.findUnique({
         where: { id: id },
         include: {
@@ -172,12 +185,15 @@ export async function PUT(
         coordinationId: id,
         coordinationTitle: existingCoordination?.title,
         eventId: existingCoordination?.eventId,
+        hasEvent: !!existingCoordination?.event,
+        eventOwnerId: existingCoordination?.event?.ownerId,
       });
     } else {
       // For regular users, must be owner of the event
       console.log('[PUT] Attempting owner lookup', { 
         coordinationId: id,
         userId: user.id,
+        userRole: user.role,
       });
       existingCoordination = await prisma.coordination.findFirst({
         where: {
@@ -197,6 +213,7 @@ export async function PUT(
         userId: user.id,
         coordinationTitle: existingCoordination?.title,
         eventId: existingCoordination?.eventId,
+        hasEvent: !!existingCoordination?.event,
       });
     }
 

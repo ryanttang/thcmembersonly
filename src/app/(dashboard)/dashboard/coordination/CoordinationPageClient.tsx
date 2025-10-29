@@ -31,6 +31,8 @@ interface Coordination {
   title: string;
   description?: string | null;
   notes?: string | null;
+  specialMessage?: string | null;
+  pointOfContacts?: any[] | null;
   shareToken: string;
   slug?: string | null;
   isActive: boolean;

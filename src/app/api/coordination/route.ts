@@ -64,6 +64,8 @@ export async function GET(request: NextRequest) {
         title: true,
         description: true,
         notes: true,
+        specialMessage: true,
+        pointOfContacts: true,
         shareToken: true,
         slug: true,
         isActive: true,

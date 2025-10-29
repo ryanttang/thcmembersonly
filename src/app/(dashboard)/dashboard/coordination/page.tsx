@@ -24,6 +24,8 @@ export default async function CoordinationPage() {
       title: true,
       description: true,
       notes: true,
+      specialMessage: true,
+      pointOfContacts: true,
       shareToken: true,
       slug: true,
       isActive: true,

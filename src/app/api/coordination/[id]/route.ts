@@ -49,28 +49,42 @@ export async function GET(
     // Admins, Organizers, and Staff can access all coordinations, others only their own
     const canManageAllEvents = ["ADMIN", "ORGANIZER", "STAFF"].includes(user.role as any);
 
-    const coordination = await prisma.coordination.findFirst({
-      where: {
-        id: id,
-        ...(canManageAllEvents ? {} : {
-          event: {
-            ownerId: user.id,
+    const coordination = canManageAllEvents
+      ? await prisma.coordination.findUnique({
+          where: { id: id },
+          include: {
+            event: {
+              select: {
+                id: true,
+                title: true,
+                slug: true,
+              },
+            },
+            documents: {
+              orderBy: { sortOrder: "asc" },
+            },
           },
-        }),
-      },
-      include: {
-        event: {
-          select: {
-            id: true,
-            title: true,
-            slug: true,
+        })
+      : await prisma.coordination.findFirst({
+          where: {
+            id: id,
+            event: {
+              ownerId: user.id,
+            },
           },
-        },
-        documents: {
-          orderBy: { sortOrder: "asc" },
-        },
-      },
-    });
+          include: {
+            event: {
+              select: {
+                id: true,
+                title: true,
+                slug: true,
+              },
+            },
+            documents: {
+              orderBy: { sortOrder: "asc" },
+            },
+          },
+        });
 
     if (!coordination) {
       return NextResponse.json({ error: "Coordination not found" }, { status: 404 });
@@ -387,17 +401,19 @@ export async function DELETE(
     // Admins, Organizers, and Staff can access all coordinations, others only their own
     const canManageAllEvents = ["ADMIN", "ORGANIZER", "STAFF"].includes(user.role as any);
 
-    // Verify the coordination belongs to the user (or user has admin/organizer privileges)
-    const existingCoordination = await prisma.coordination.findFirst({
-      where: {
-        id: id,
-        ...(canManageAllEvents ? {} : {
-          event: {
-            ownerId: user.id,
+    // Verify the coordination belongs to the user (or user has admin/organizer/staff privileges)
+    const existingCoordination = canManageAllEvents
+      ? await prisma.coordination.findUnique({
+          where: { id: id },
+        })
+      : await prisma.coordination.findFirst({
+          where: {
+            id: id,
+            event: {
+              ownerId: user.id,
+            },
           },
-        }),
-      },
-    });
+        });
 
     if (!existingCoordination) {
       console.error('[DELETE] Coordination not found', {

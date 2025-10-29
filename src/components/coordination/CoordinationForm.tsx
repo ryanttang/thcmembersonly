@@ -401,7 +401,8 @@ export default function CoordinationForm({
   );
 
   // If coordination prop exists, we're in edit mode and should render form directly (no button/modal wrapper)
-  if (coordination) {
+  // This component is embedded in CoordinationCard's modal, so we just return the form content
+  if (coordination && coordination.id) {
     return renderFormContent();
   }
 

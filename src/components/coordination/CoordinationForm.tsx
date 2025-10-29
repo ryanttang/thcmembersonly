@@ -68,8 +68,8 @@ export default function CoordinationForm({
     coordinationObject: coordination,
   });
 
-  // Check if we're in edit mode
-  const isEditMode = coordination && coordination.id;
+  // Check if we're in edit mode - must be done before hooks but hooks must always run
+  const isEditMode = !!(coordination && coordination.id);
   
   // All hooks must be called before conditional returns
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -88,13 +88,15 @@ export default function CoordinationForm({
 
   // Sync form state whenever coordination prop changes (works both inline and modal usage)
   useEffect(() => {
-    if (coordination) {
+    if (coordination && coordination.id) {
       const parsedContacts = parsePointOfContacts(coordination.pointOfContacts);
-      console.log('CoordinationForm: Setting form data from coordination', {
+      console.log('CoordinationForm: useEffect updating form data', {
         id: coordination.id,
+        title: coordination.title,
         specialMessage: coordination.specialMessage,
         pointOfContacts: coordination.pointOfContacts,
         parsedContacts,
+        isEditMode,
       });
       setFormData({
         eventId: coordination.eventId || "",
@@ -104,7 +106,7 @@ export default function CoordinationForm({
         specialMessage: coordination.specialMessage || "",
         pointOfContacts: parsedContacts,
       });
-    } else {
+    } else if (!coordination) {
       // Reset form when coordination is cleared
       setFormData({
         eventId: "",
@@ -115,7 +117,7 @@ export default function CoordinationForm({
         pointOfContacts: [],
       });
     }
-  }, [coordination]);
+  }, [coordination, isEditMode]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -415,11 +417,21 @@ export default function CoordinationForm({
   // If coordination prop exists, we're in edit mode and should render form directly (no button/modal wrapper)
   // This component is embedded in CoordinationCard's modal, so we just return the form content
   if (isEditMode) {
-    console.log('CoordinationForm: Rendering form directly in edit mode');
+    console.log('CoordinationForm: Rendering form directly in edit mode', {
+      coordinationId: coordination.id,
+      hasSpecialMessage: !!coordination.specialMessage,
+      hasPointOfContacts: !!coordination.pointOfContacts,
+      formDataSpecialMessage: formData.specialMessage,
+      formDataPointOfContacts: formData.pointOfContacts,
+    });
     return renderFormContent();
   }
   
-  console.log('CoordinationForm: Rendering with button/modal (create mode)');
+  console.log('CoordinationForm: Rendering with button/modal (create mode)', {
+    hasCoordination: !!coordination,
+    coordinationId: coordination?.id,
+    isEditMode,
+  });
 
   // Otherwise, render with button and modal for create mode
   return (

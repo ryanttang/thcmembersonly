@@ -3,6 +3,10 @@ import { getServerAuthSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import CoordinationPageClient from "./CoordinationPageClient";
 
+// Force dynamic rendering to prevent caching issues
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default async function CoordinationPage() {
   const session = await getServerAuthSession();
   if (!session?.user?.email) redirect("/signin");

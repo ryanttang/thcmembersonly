@@ -16,7 +16,8 @@
     "deploy:full": "npm run build && npm run deploy:db && npm run verify",
     "check:db": "node scripts/check-database.js",
     "compare:deployments": "node scripts/compare-vercel-deployments.js",
-    "sync:env-check": "node scripts/sync-env-checklist.js"
+    "sync:env-check": "node scripts/sync-env-checklist.js",
+    "fix:production-domain": "node scripts/fix-production-domain.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.635.0",

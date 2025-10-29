@@ -464,7 +464,7 @@ export default function CoordinationForm({
         }}
         transition="all 0.2s"
       >
-        Create Coordination Set v{COMPONENT_VERSION}
+        Create Coordination Set
       </Button>
 
       <Modal isOpen={isOpen} onClose={onClose} size="xl">

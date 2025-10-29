@@ -1,10 +1,21 @@
 // Cache doesn't need environment variables, so we can remove the import
 
-// Simple in-memory cache implementation
-// In production, replace with Redis or similar
-const DISABLE_IN_MEMORY_CACHE = process.env.NODE_ENV === 'production';
+import { redis, isRedisEnabled } from '@/lib/redis';
 
-class Cache {
+// Simple in-memory cache implementation with optional Redis backend
+const DISABLE_IN_MEMORY_CACHE = process.env.NODE_ENV === 'production' && isRedisEnabled();
+
+interface CacheLike {
+  set(key: string, value: any, ttl?: number): void | Promise<void>;
+  get<T>(key: string): T | null | Promise<T | null>;
+  delete(key: string): boolean | Promise<boolean>;
+  clear(): void | Promise<void>;
+  has(key: string): boolean | Promise<boolean>;
+  size(): number | Promise<number>;
+  cleanup(): void | Promise<void>;
+}
+
+class MemoryCache implements CacheLike {
   private store: Map<string, { value: any; expires: number }> = new Map();
   private defaultTTL: number;
 
@@ -74,11 +85,112 @@ class Cache {
   }
 }
 
+class RedisCache implements CacheLike {
+  private defaultTTL: number;
+  private prefix: string;
+
+  constructor(defaultTTL: number, prefix: string) {
+    this.defaultTTL = defaultTTL;
+    this.prefix = prefix;
+  }
+
+  private k(key: string): string {
+    return `${this.prefix}:${key}`;
+  }
+
+  async set(key: string, value: any, ttl?: number): Promise<void> {
+    if (!redis) return;
+    const payload = JSON.stringify(value);
+    const ttlMs = ttl || this.defaultTTL;
+    // psetex key ttl value
+    // @upstash/redis: set with PX option achieved via set with px
+    // But redis client exposes set with expiration options; fallback to two-step if unavailable
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const client: any = redis as any;
+    if (client.set) {
+      await client.set(this.k(key), payload, { px: ttlMs });
+    } else if (client.psetex) {
+      await client.psetex(this.k(key), ttlMs, payload);
+    } else {
+      await client.set(this.k(key), payload);
+      await client.pexpire(this.k(key), ttlMs);
+    }
+  }
+
+  async get<T>(key: string): Promise<T | null> {
+    if (!redis) return null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const client: any = redis as any;
+    const raw = await client.get(this.k(key));
+    if (!raw) return null;
+    try {
+      return typeof raw === 'string' ? (JSON.parse(raw) as T) : (raw as T);
+    } catch {
+      return null;
+    }
+  }
+
+  async delete(key: string): Promise<boolean> {
+    if (!redis) return false;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const client: any = redis as any;
+    const res = await client.del(this.k(key));
+    return (res as number) > 0;
+  }
+
+  async clear(): Promise<void> {
+    if (!redis) return;
+    // Upstash supports scan; but @upstash/redis provides scan via "scan" command
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const client: any = redis as any;
+    let cursor = 0;
+    const pattern = `${this.prefix}:*`;
+    do {
+      const reply = await client.scan(cursor, { match: pattern, count: 100 });
+      cursor = reply[0];
+      const keys: string[] = reply[1] || [];
+      if (keys.length > 0) {
+        await client.del(...keys);
+      }
+    } while (cursor !== 0);
+  }
+
+  async has(key: string): Promise<boolean> {
+    if (!redis) return false;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const client: any = redis as any;
+    const ttl = await client.pttl(this.k(key));
+    return typeof ttl === 'number' && ttl > 0;
+  }
+
+  async size(): Promise<number> {
+    if (!redis) return 0;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const client: any = redis as any;
+    let cursor = 0;
+    let count = 0;
+    const pattern = `${this.prefix}:*`;
+    do {
+      const reply = await client.scan(cursor, { match: pattern, count: 100 });
+      cursor = reply[0];
+      const keys: string[] = reply[1] || [];
+      count += keys.length;
+    } while (cursor !== 0);
+    return count;
+  }
+
+  async cleanup(): Promise<void> {
+    // Redis handles expiry; nothing to do
+  }
+}
+
 // Create cache instances for different use cases
-export const eventCache = new Cache(600000); // 10 minutes
-export const userCache = new Cache(300000);  // 5 minutes
-export const imageCache = new Cache(1800000); // 30 minutes
-export const apiCache = new Cache(60000);    // 1 minute
+const useRedis = isRedisEnabled();
+
+export const eventCache: CacheLike = useRedis ? new RedisCache(600000, 'event') : new MemoryCache(600000);
+export const userCache: CacheLike = useRedis ? new RedisCache(300000, 'user') : new MemoryCache(300000);
+export const imageCache: CacheLike = useRedis ? new RedisCache(1800000, 'image') : new MemoryCache(1800000);
+export const apiCache: CacheLike = useRedis ? new RedisCache(60000, 'api') : new MemoryCache(60000);
 
 // Cache key generators
 export const cacheKeys = {
@@ -95,7 +207,7 @@ export const cacheKeys = {
 
 // Cache wrapper for async functions
 export function withCache<T extends any[], R>(
-  cache: Cache,
+  cache: CacheLike,
   keyGenerator: (...args: T) => string,
   fn: (...args: T) => Promise<R>,
   ttl?: number
@@ -104,14 +216,14 @@ export function withCache<T extends any[], R>(
     const key = keyGenerator(...args);
     
     // Try to get from cache first
-    const cached = cache.get<R>(key);
+    const cached = await cache.get<R>(key as string);
     if (cached !== null) {
       return cached;
     }
 
     // Execute function and cache result
     const result = await fn(...args);
-    cache.set(key, result, ttl);
+    await cache.set(key, result, ttl);
     
     return result;
   };
@@ -119,7 +231,7 @@ export function withCache<T extends any[], R>(
 
 // Database query caching
 export function cacheQuery<T extends any[], R>(
-  cache: Cache,
+  cache: CacheLike,
   keyGenerator: (...args: T) => string,
   queryFn: (...args: T) => Promise<R>,
   ttl?: number
@@ -129,7 +241,7 @@ export function cacheQuery<T extends any[], R>(
 
 // API response caching
 export function cacheApiResponse<T>(
-  cache: Cache,
+  cache: CacheLike,
   key: string,
   responseFn: () => Promise<T>,
   ttl?: number
@@ -138,41 +250,41 @@ export function cacheApiResponse<T>(
 }
 
 // Cache invalidation helpers
-export function invalidateEventCache(eventId?: string): void {
+export async function invalidateEventCache(eventId?: string): Promise<void> {
   if (eventId) {
-    eventCache.delete(cacheKeys.event(eventId));
-    eventCache.delete(cacheKeys.events());
-    eventCache.delete(cacheKeys.galleries(eventId));
+    await eventCache.delete(cacheKeys.event(eventId));
+    await eventCache.delete(cacheKeys.events());
+    await eventCache.delete(cacheKeys.galleries(eventId));
   } else {
     // Clear all event-related cache
-    eventCache.clear();
+    await eventCache.clear();
   }
 }
 
-export function invalidateUserCache(userId?: string, email?: string): void {
+export async function invalidateUserCache(userId?: string, email?: string): Promise<void> {
   if (userId) {
-    userCache.delete(cacheKeys.user(userId));
+    await userCache.delete(cacheKeys.user(userId));
   }
   if (email) {
-    userCache.delete(cacheKeys.userByEmail(email));
+    await userCache.delete(cacheKeys.userByEmail(email));
   }
 }
 
-export function invalidateGalleryCache(galleryId?: string, eventId?: string): void {
+export async function invalidateGalleryCache(galleryId?: string, eventId?: string): Promise<void> {
   if (galleryId) {
-    imageCache.delete(cacheKeys.gallery(galleryId));
+    await imageCache.delete(cacheKeys.gallery(galleryId));
   }
   if (eventId) {
-    imageCache.delete(cacheKeys.galleries(eventId));
+    await imageCache.delete(cacheKeys.galleries(eventId));
   }
 }
 
 // Periodic cleanup
-if (typeof window === 'undefined') { // Server-side only
+if (typeof window === 'undefined' && !useRedis) { // Server-side only, memory cleanup
   setInterval(() => {
-    eventCache.cleanup();
-    userCache.cleanup();
-    imageCache.cleanup();
-    apiCache.cleanup();
-  }, 300000); // Cleanup every 5 minutes
+    (eventCache as MemoryCache).cleanup?.();
+    (userCache as MemoryCache).cleanup?.();
+    (imageCache as MemoryCache).cleanup?.();
+    (apiCache as MemoryCache).cleanup?.();
+  }, 300000);
 }

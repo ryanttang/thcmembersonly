@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import { redis, isRedisEnabled } from '@/lib/redis';
 
 interface RateLimitOptions {
   windowMs: number; // Time window in milliseconds
@@ -13,61 +14,65 @@ interface RateLimitResult {
   reset: number;
 }
 
-// In-memory store for rate limiting (use Redis in production)
-const store = new Map<string, { count: number; resetTime: number }>();
+// In-memory store fallback (development or when Redis is not configured)
+const memoryStore = new Map<string, { count: number; resetTime: number }>();
 
-export function rateLimit(options: RateLimitOptions) {
+function memoryRateLimit(options: RateLimitOptions) {
   const { windowMs, max, keyGenerator } = options;
 
-  return (req: NextRequest): RateLimitResult => {
+  return async (req: NextRequest): Promise<RateLimitResult> => {
     const key = keyGenerator ? keyGenerator(req) : getDefaultKey(req);
     const now = Date.now();
-    const windowStart = now - windowMs;
 
-    // Clean up expired entries
-    const entries = Array.from(store.entries());
-    for (const [k, v] of entries) {
-      if (v.resetTime < now) {
-        store.delete(k);
-      }
-    }
-
-    const current = store.get(key);
-    
+    const current = memoryStore.get(key);
     if (!current || current.resetTime < now) {
-      // First request or window expired
       const resetTime = now + windowMs;
-      store.set(key, { count: 1, resetTime });
-      
-      return {
-        success: true,
-        limit: max,
-        remaining: max - 1,
-        reset: resetTime,
-      };
+      memoryStore.set(key, { count: 1, resetTime });
+      return { success: true, limit: max, remaining: max - 1, reset: resetTime };
     }
 
     if (current.count >= max) {
-      // Rate limit exceeded
-      return {
-        success: false,
-        limit: max,
-        remaining: 0,
-        reset: current.resetTime,
-      };
+      return { success: false, limit: max, remaining: 0, reset: current.resetTime };
     }
 
-    // Increment counter
     current.count++;
-    store.set(key, current);
-
-    return {
-      success: true,
-      limit: max,
-      remaining: max - current.count,
-      reset: current.resetTime,
-    };
+    memoryStore.set(key, current);
+    return { success: true, limit: max, remaining: max - current.count, reset: current.resetTime };
   };
+}
+
+function redisRateLimit(options: RateLimitOptions) {
+  const { windowMs, max, keyGenerator } = options;
+
+  return async (req: NextRequest): Promise<RateLimitResult> => {
+    // If Redis is not available, fallback to memory
+    if (!isRedisEnabled() || !redis) {
+      return memoryRateLimit(options)(req);
+    }
+
+    const key = keyGenerator ? keyGenerator(req) : getDefaultKey(req);
+    const now = Date.now();
+
+    // Increment and set TTL on first hit
+    const count = await redis.incr(key);
+    if (count === 1) {
+      await redis.pexpire(key, windowMs);
+    }
+
+    const ttl = await redis.pttl(key); // milliseconds until reset
+    const reset = ttl > 0 ? now + ttl : now + windowMs;
+
+    if (count > max) {
+      return { success: false, limit: max, remaining: 0, reset };
+    }
+
+    return { success: true, limit: max, remaining: max - count, reset };
+  };
+}
+
+export function rateLimit(options: RateLimitOptions) {
+  // Prefer Redis when available
+  return isRedisEnabled() ? redisRateLimit(options) : memoryRateLimit(options);
 }
 
 function getDefaultKey(req: NextRequest): string {

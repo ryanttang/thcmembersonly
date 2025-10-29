@@ -36,6 +36,8 @@ const envSchema = z.object({
   
   // Performance (optional)
   REDIS_URL: z.string().url().optional(),
+  UPSTASH_REDIS_REST_URL: z.string().url().optional(),
+  UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
   CDN_URL: z.string().url().optional(),
   
   // Security

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authRateLimit, apiRateLimit, uploadRateLimit, contactRateLimit } from '@/lib/rate-limit';
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Skip rate limiting in development mode
@@ -9,7 +9,7 @@ export function middleware(request: NextRequest) {
   
   // Apply rate limiting based on route
   if (pathname.startsWith('/api/auth/')) {
-    const result = isDevelopment ? { success: true, limit: 1000, remaining: 999, reset: Date.now() + 60000 } : authRateLimit(request);
+    const result = isDevelopment ? { success: true, limit: 1000, remaining: 999, reset: Date.now() + 60000 } : await authRateLimit(request);
     if (!result.success) {
       return new NextResponse(
         JSON.stringify({ 
@@ -31,7 +31,7 @@ export function middleware(request: NextRequest) {
   }
 
   if (pathname.startsWith('/api/upload')) {
-    const result = isDevelopment ? { success: true, limit: 1000, remaining: 999, reset: Date.now() + 60000 } : uploadRateLimit(request);
+    const result = isDevelopment ? { success: true, limit: 1000, remaining: 999, reset: Date.now() + 60000 } : await uploadRateLimit(request);
     if (!result.success) {
       return new NextResponse(
         JSON.stringify({ 
@@ -53,7 +53,7 @@ export function middleware(request: NextRequest) {
   }
 
   if (pathname.startsWith('/api/contact')) {
-    const result = isDevelopment ? { success: true, limit: 1000, remaining: 999, reset: Date.now() + 60000 } : contactRateLimit(request);
+    const result = isDevelopment ? { success: true, limit: 1000, remaining: 999, reset: Date.now() + 60000 } : await contactRateLimit(request);
     if (!result.success) {
       return new NextResponse(
         JSON.stringify({ 
@@ -75,7 +75,7 @@ export function middleware(request: NextRequest) {
   }
 
   if (pathname.startsWith('/api/')) {
-    const result = isDevelopment ? { success: true, limit: 1000, remaining: 999, reset: Date.now() + 60000 } : apiRateLimit(request);
+    const result = isDevelopment ? { success: true, limit: 1000, remaining: 999, reset: Date.now() + 60000 } : await apiRateLimit(request);
     if (!result.success) {
       return new NextResponse(
         JSON.stringify({ 

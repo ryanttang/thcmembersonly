@@ -37,6 +37,13 @@ Required environment variables:
 - `NEXTAUTH_SECRET`: Strong secret for NextAuth
 - `AWS_REGION`, `S3_BUCKET`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`
 
+Optional (recommended for production):
+
+- Redis (used for rate limiting and caching automatically when set):
+  - `UPSTASH_REDIS_REST_URL`
+  - `UPSTASH_REDIS_REST_TOKEN`
+  - or `REDIS_URL` (non-serverless)
+
 ### 2. Install Dependencies
 
 ```bash

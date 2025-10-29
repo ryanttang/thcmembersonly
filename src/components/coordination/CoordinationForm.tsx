@@ -60,6 +60,18 @@ export default function CoordinationForm({
   coordination, 
   onSuccess 
 }: CoordinationFormProps) {
+  // Debug: Log what we receive
+  console.log('CoordinationForm rendered:', {
+    hasCoordination: !!coordination,
+    coordinationId: coordination?.id,
+    coordinationType: typeof coordination,
+    coordinationObject: coordination,
+  });
+
+  // Check if we're in edit mode
+  const isEditMode = coordination && coordination.id;
+  
+  // All hooks must be called before conditional returns
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [isLoading, setIsLoading] = useState(false);
   const [createdCoordinationId, setCreatedCoordinationId] = useState<string | null>(null);
@@ -402,9 +414,12 @@ export default function CoordinationForm({
 
   // If coordination prop exists, we're in edit mode and should render form directly (no button/modal wrapper)
   // This component is embedded in CoordinationCard's modal, so we just return the form content
-  if (coordination && coordination.id) {
+  if (isEditMode) {
+    console.log('CoordinationForm: Rendering form directly in edit mode');
     return renderFormContent();
   }
+  
+  console.log('CoordinationForm: Rendering with button/modal (create mode)');
 
   // Otherwise, render with button and modal for create mode
   return (

@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
 import { z } from "zod";
 
-// Force rebuild for Vercel deployment - updated Oct 28, 2024
+// Force rebuild for Vercel deployment
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -187,7 +187,7 @@ export async function PUT(
     }
 
     if (!existingCoordination) {
-      console.error('[PUT] Coordination not found - DETAILED DEBUG', {
+      console.error('[PUT] Coordination not editable under current permissions', {
         coordinationId: id,
         userId: user.id,
         userEmail: user.email,
@@ -196,8 +196,8 @@ export async function PUT(
         requestUrl: request.url,
         timestamp: new Date().toISOString(),
       });
-      
-      // Try a direct database check to see if coordination exists at all
+
+      // Direct database check to distinguish between not found vs ownership denial
       const directCheck = await prisma.coordination.findUnique({
         where: { id: id },
         select: { 
@@ -209,18 +209,28 @@ export async function PUT(
           }
         }
       });
-      
-      console.error('[PUT] Direct database check', { 
-        exists: !!directCheck,
-        coordination: directCheck,
-      });
-      
+
+      if (directCheck) {
+        // Exists but not visible under current permission rules → explicit 403
+        return NextResponse.json({ 
+          error: "Forbidden",
+          reason: "ownership_denied",
+          details: {
+            coordinationId: id,
+            userId: user.id,
+            userRole: user.role,
+            eventOwnerId: directCheck.event?.ownerId ?? null,
+          }
+        }, { status: 403 });
+      }
+
+      // Truly not found
       return NextResponse.json({ 
         error: "Coordination not found",
         details: {
           coordinationId: id,
           userRole: user.role,
-          coordinationExists: !!directCheck,
+          coordinationExists: false,
         }
       }, { status: 404 });
     }

@@ -39,8 +39,8 @@
       "destination": "/api/health"
     },
     {
-      "source": "/api/coordination/:id",
-      "destination": "/api/coordination/id/:id"
+      "source": "/api/coordination/id/:id",
+      "destination": "/api/coordination/:id"
     }
   ]
 }

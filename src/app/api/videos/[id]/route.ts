@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { revalidatePath } from "next/cache";
 import { getServerAuthSession } from "@/lib/auth";
 import { z } from "zod";
 
@@ -67,6 +68,10 @@ export async function PUT(
       data: validatedData,
     });
 
+    try {
+      revalidatePath("/");
+    } catch {}
+
     return NextResponse.json({ video });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -110,6 +115,10 @@ export async function DELETE(
     await prisma.recentEventVideo.delete({
       where: { id: params.id },
     });
+
+    try {
+      revalidatePath("/");
+    } catch {}
 
     return NextResponse.json({ success: true });
   } catch (error) {

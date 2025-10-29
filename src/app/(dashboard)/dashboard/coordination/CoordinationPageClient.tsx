@@ -94,8 +94,8 @@ export default function CoordinationPageClient({
   }, [showArchived, coordinations, fetchCoordinations]);
 
   const handleRefresh = () => {
-    // Refresh the page to show the new coordination set
-    window.location.reload();
+    // Refresh list without full page reload to preserve UI state
+    fetchCoordinations(showArchived);
   };
 
   return (

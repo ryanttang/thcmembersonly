@@ -2,6 +2,8 @@
 
 // Simple in-memory cache implementation
 // In production, replace with Redis or similar
+const DISABLE_IN_MEMORY_CACHE = process.env.NODE_ENV === 'production';
+
 class Cache {
   private store: Map<string, { value: any; expires: number }> = new Map();
   private defaultTTL: number;
@@ -12,12 +14,14 @@ class Cache {
 
   // Set a value in cache
   set(key: string, value: any, ttl?: number): void {
+    if (DISABLE_IN_MEMORY_CACHE) return;
     const expires = Date.now() + (ttl || this.defaultTTL);
     this.store.set(key, { value, expires });
   }
 
   // Get a value from cache
   get<T>(key: string): T | null {
+    if (DISABLE_IN_MEMORY_CACHE) return null;
     const item = this.store.get(key);
     
     if (!item) {
@@ -34,27 +38,32 @@ class Cache {
 
   // Delete a value from cache
   delete(key: string): boolean {
+    if (DISABLE_IN_MEMORY_CACHE) return false;
     return this.store.delete(key);
   }
 
   // Clear all cache
   clear(): void {
+    if (DISABLE_IN_MEMORY_CACHE) return;
     this.store.clear();
   }
 
   // Check if key exists and is not expired
   has(key: string): boolean {
+    if (DISABLE_IN_MEMORY_CACHE) return false;
     const item = this.store.get(key);
     return item ? Date.now() <= item.expires : false;
   }
 
   // Get cache size
   size(): number {
+    if (DISABLE_IN_MEMORY_CACHE) return 0;
     return this.store.size;
   }
 
   // Clean expired entries
   cleanup(): void {
+    if (DISABLE_IN_MEMORY_CACHE) return;
     const now = Date.now();
     const entries = Array.from(this.store.entries());
     for (const [key, item] of entries) {

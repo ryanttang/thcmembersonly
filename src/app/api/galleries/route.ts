@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { getServerAuthSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Gallery, GalleryImage, Image, Event } from "@prisma/client";
@@ -109,18 +110,19 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Create gallery
-    const gallery = await prisma.gallery.create({
-      data: {
-        name: name.trim(),
-        description: description?.trim() || null,
-        eventId: eventId || null,
-        tags: tags || [],
-        isPublic: isPublic !== false,
-      }
-    });
+    // Create gallery and optional images atomically
+    const [gallery] = await prisma.$transaction([
+      prisma.gallery.create({
+        data: {
+          name: name.trim(),
+          description: description?.trim() || null,
+          eventId: eventId || null,
+          tags: tags || [],
+          isPublic: isPublic !== false,
+        }
+      }),
+    ]);
 
-    // Add images to gallery if provided
     if (images && images.length > 0) {
       const galleryImages = images.map((img: any, index: number) => ({
         galleryId: gallery.id,
@@ -131,10 +133,14 @@ export async function POST(request: NextRequest) {
         sortOrder: index,
       }));
 
-      await prisma.galleryImage.createMany({
-        data: galleryImages
-      });
+      await prisma.galleryImage.createMany({ data: galleryImages });
     }
+
+    // Revalidate public pages that surface galleries
+    try {
+      revalidatePath("/");
+      revalidatePath("/gallery");
+    } catch {}
 
     return NextResponse.json({ success: true, gallery });
   } catch (error) {
@@ -194,41 +200,41 @@ export async function PUT(request: NextRequest) {
       }
     }
 
-    // Update gallery
-    const updatedGallery = await prisma.gallery.update({
-      where: { id },
-      data: {
-        name: name.trim(),
-        description: description?.trim() || null,
-        eventId: eventId || null,
-        tags: tags || [],
-        isPublic: isPublic !== false,
+    // Update gallery and sync images atomically
+    const result = await prisma.$transaction(async (tx) => {
+      const updated = await tx.gallery.update({
+        where: { id },
+        data: {
+          name: name.trim(),
+          description: description?.trim() || null,
+          eventId: eventId || null,
+          tags: tags || [],
+          isPublic: isPublic !== false,
+        }
+      });
+
+      if (images && images.length > 0) {
+        await tx.galleryImage.deleteMany({ where: { galleryId: id } });
+        const galleryImages = images.map((img: any, index: number) => ({
+          galleryId: id,
+          imageId: img.id,
+          title: img.title || null,
+          caption: img.caption || null,
+          tags: img.tags || [],
+          sortOrder: index,
+        }));
+        await tx.galleryImage.createMany({ data: galleryImages });
       }
+
+      return updated;
     });
 
-    // Update images if provided
-    if (images && images.length > 0) {
-      // Remove existing images
-      await prisma.galleryImage.deleteMany({
-        where: { galleryId: id }
-      });
+    try {
+      revalidatePath("/");
+      revalidatePath("/gallery");
+    } catch {}
 
-      // Add new images
-      const galleryImages = images.map((img: any, index: number) => ({
-        galleryId: id,
-        imageId: img.id,
-        title: img.title || null,
-        caption: img.caption || null,
-        tags: img.tags || [],
-        sortOrder: index,
-      }));
-
-      await prisma.galleryImage.createMany({
-        data: galleryImages
-      });
-    }
-
-    return NextResponse.json({ success: true, gallery: updatedGallery });
+    return NextResponse.json({ success: true, gallery: result });
   } catch (error) {
     console.error("Error updating gallery:", error);
     return NextResponse.json(

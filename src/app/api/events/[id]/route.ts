@@ -4,6 +4,7 @@ import { getServerAuthSession } from "@/lib/auth";
 import { updateEventSchema } from "@/lib/validation";
 import { canEditEvent } from "@/lib/rbac";
 import { createSlug } from "@/lib/utils";
+import { revalidatePath } from "next/cache";
 
 export async function GET(
   req: NextRequest, 
@@ -97,21 +98,18 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       updateData.endAt = new Date(updateData.endAt);
     }
 
-    const updated = await prisma.event.update({ where: { id: params.id }, data: updateData });
-    
-    // Handle hero image assignment/removal
-    if (parsed.data.heroImageId !== undefined) {
-      if (parsed.data.heroImageId) {
-        // Assign new hero image
-        await prisma.image.update({ where: { id: parsed.data.heroImageId }, data: { eventId: params.id } });
-      } else {
-        // Remove hero image (heroImageId is empty string)
-        await prisma.event.update({ 
-          where: { id: params.id }, 
-          data: { heroImageId: null } 
-        });
+    await prisma.$transaction(async (tx) => {
+      await tx.event.update({ where: { id: params.id }, data: updateData });
+
+      // Handle hero image assignment/removal within the transaction
+      if (parsed.data.heroImageId !== undefined) {
+        if (parsed.data.heroImageId) {
+          await tx.image.update({ where: { id: parsed.data.heroImageId }, data: { eventId: params.id } });
+        } else {
+          await tx.event.update({ where: { id: params.id }, data: { heroImageId: null } });
+        }
       }
-    }
+    });
     
     // Return the updated event with hero image included
     const eventWithHero = await prisma.event.findUnique({
@@ -119,6 +117,11 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       include: { heroImage: true }
     });
     
+    try {
+      revalidatePath("/");
+      revalidatePath("/events");
+    } catch {}
+
     return NextResponse.json(eventWithHero);
   } catch (error) {
     console.error("Error updating event:", error);
@@ -142,5 +145,11 @@ export async function DELETE(_: NextRequest, { params }: { params: { id: string 
   }
 
   await prisma.event.delete({ where: { id: params.id } });
+
+  try {
+    revalidatePath("/");
+    revalidatePath("/events");
+  } catch {}
+
   return NextResponse.json({ ok: true });
 }

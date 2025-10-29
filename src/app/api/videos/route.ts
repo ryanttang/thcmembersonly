@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { revalidatePath } from "next/cache";
 import { getServerAuthSession } from "@/lib/auth";
 import { z } from "zod";
 
@@ -67,6 +68,10 @@ export async function POST(req: NextRequest) {
     const video = await prisma.recentEventVideo.create({
       data: validatedData,
     });
+
+    try {
+      revalidatePath("/");
+    } catch {}
 
     return NextResponse.json({ video }, { status: 201 });
   } catch (error) {

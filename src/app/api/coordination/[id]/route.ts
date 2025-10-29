@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { getServerAuthSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
@@ -394,6 +395,10 @@ export async function PUT(
       changes: Object.keys(updateData),
     });
 
+    try {
+      revalidatePath("/dashboard/coordination");
+    } catch {}
+
     return NextResponse.json(coordination);
   } catch (error) {
     console.error('[PUT] Error updating coordination - DETAILED', {
@@ -481,6 +486,10 @@ export async function DELETE(
     await prisma.coordination.delete({
       where: { id: id },
     });
+
+    try {
+      revalidatePath("/dashboard/coordination");
+    } catch {}
 
     return NextResponse.json({ success: true });
   } catch (error) {

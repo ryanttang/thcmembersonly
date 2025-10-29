@@ -91,7 +91,7 @@ export default function CoordinationCard({ coordination, events }: CoordinationC
 
     setIsDeleting(true);
     try {
-      const response = await fetch(`/api/coordination/id/${coordination.id}`, {
+      const response = await fetch(`/api/coordination/${coordination.id}`, {
         method: "DELETE",
       });
 
@@ -108,9 +108,7 @@ export default function CoordinationCard({ coordination, events }: CoordinationC
       });
 
       // Trigger parent component refresh
-      if (typeof window !== 'undefined') {
-        window.location.reload();
-      }
+      // No-op here; parent page handles refresh via callbacks
     } catch (error) {
       toast({
         title: "Error",
@@ -135,7 +133,7 @@ export default function CoordinationCard({ coordination, events }: CoordinationC
 
     setIsArchiving(true);
     try {
-      const response = await fetch(`/api/coordination/id/${coordination.id}`, {
+      const response = await fetch(`/api/coordination/${coordination.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -158,9 +156,7 @@ export default function CoordinationCard({ coordination, events }: CoordinationC
       });
 
       // Trigger parent component refresh
-      if (typeof window !== 'undefined') {
-        window.location.reload();
-      }
+      // No-op here; parent page handles refresh via callbacks
     } catch (error) {
       toast({
         title: "Error",
@@ -406,9 +402,7 @@ export default function CoordinationCard({ coordination, events }: CoordinationC
               events={events}
               onSuccess={() => {
                 onClose();
-                if (typeof window !== 'undefined') {
-                  window.location.reload();
-                }
+                // Parent will drive refresh
               }}
             />
           </ModalBody>
@@ -426,9 +420,7 @@ export default function CoordinationCard({ coordination, events }: CoordinationC
               coordinationId={coordination.id}
               onSuccess={() => {
                 onUploadClose();
-                if (typeof window !== 'undefined') {
-                  window.location.reload();
-                }
+                // Parent will drive refresh
               }}
             />
           </ModalBody>

@@ -126,8 +126,8 @@ const nextConfig = {
   async rewrites() {
     return [
       {
-        source: '/api/coordination/:id',
-        destination: '/api/coordination/id/:id',
+        source: '/api/coordination/id/:id',
+        destination: '/api/coordination/:id',
       },
     ];
   },

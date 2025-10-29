@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { getServerAuthSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
@@ -196,6 +197,10 @@ export async function POST(request: NextRequest) {
       userRole: user.role,
       duration: `${duration}ms`,
     });
+
+    try {
+      revalidatePath("/dashboard/coordination");
+    } catch {}
 
     return NextResponse.json(coordination, { status: 201 });
   } catch (error) {

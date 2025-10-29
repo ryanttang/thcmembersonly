@@ -79,7 +79,7 @@ export default function CoordinationForm({
 
     try {
       const url = coordination 
-        ? `/api/coordination/id/${coordination.id}`
+        ? `/api/coordination/${coordination.id}`
         : "/api/coordination";
       
       const method = coordination ? "PUT" : "POST";

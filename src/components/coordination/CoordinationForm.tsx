@@ -41,6 +41,20 @@ interface CoordinationFormProps {
   onSuccess?: () => void;
 }
 
+// Helper function to safely parse pointOfContacts
+const parsePointOfContacts = (contacts: any): any[] => {
+  if (!contacts) return [];
+  if (Array.isArray(contacts)) return contacts;
+  if (typeof contacts === 'string') {
+    try {
+      return JSON.parse(contacts);
+    } catch {
+      return [];
+    }
+  }
+  return [];
+};
+
 export default function CoordinationForm({ 
   events, 
   coordination, 
@@ -49,26 +63,38 @@ export default function CoordinationForm({
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [isLoading, setIsLoading] = useState(false);
   const [createdCoordinationId, setCreatedCoordinationId] = useState<string | null>(null);
+  
   const [formData, setFormData] = useState({
     eventId: coordination?.eventId || "",
     title: coordination?.title || "",
     description: coordination?.description || "",
     notes: coordination?.notes || "",
     specialMessage: coordination?.specialMessage || "",
-    pointOfContacts: coordination?.pointOfContacts || [],
+    pointOfContacts: parsePointOfContacts(coordination?.pointOfContacts),
   });
   const toast = useToast();
 
   // Sync form state whenever coordination prop changes (works both inline and modal usage)
   useEffect(() => {
     if (coordination) {
+      const parsedContacts = parsePointOfContacts(coordination.pointOfContacts);
       setFormData({
         eventId: coordination.eventId || "",
         title: coordination.title || "",
         description: coordination.description || "",
         notes: coordination.notes || "",
         specialMessage: coordination.specialMessage || "",
-        pointOfContacts: coordination.pointOfContacts || [],
+        pointOfContacts: parsedContacts,
+      });
+    } else {
+      // Reset form when coordination is cleared
+      setFormData({
+        eventId: "",
+        title: "",
+        description: "",
+        notes: "",
+        specialMessage: "",
+        pointOfContacts: [],
       });
     }
   }, [coordination]);

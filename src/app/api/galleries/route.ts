@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { getServerAuthSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@prisma/client";
 import { Gallery, GalleryImage, Image, Event } from "@prisma/client";
 
 export async function GET(request: NextRequest) {
@@ -201,7 +202,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Update gallery and sync images atomically
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const updated = await tx.gallery.update({
         where: { id },
         data: {

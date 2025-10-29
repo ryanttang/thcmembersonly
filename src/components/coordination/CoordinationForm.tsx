@@ -1,5 +1,9 @@
 "use client";
 
+// VERSION: 2024-12-19-01 - Force cache bust
+// This constant ensures the component updates when deployed
+const COMPONENT_VERSION = "2024-12-19-01";
+
 import { useState, useEffect } from "react";
 import {
   Button,
@@ -63,13 +67,19 @@ export default function CoordinationForm({
   coordination, 
   onSuccess 
 }: CoordinationFormProps) {
-  // Debug: Log what we receive
-  console.log('CoordinationForm rendered:', {
+  // VERSION CHECK: Log to verify new code is running
+  console.log('🔵 CoordinationForm v' + COMPONENT_VERSION, {
     hasCoordination: !!coordination,
     coordinationId: coordination?.id,
     coordinationType: typeof coordination,
-    coordinationObject: coordination,
   });
+  
+  // CRITICAL CHECK: If coordination exists, MUST render form, not button
+  if (coordination?.id) {
+    console.log('✅ EDIT MODE DETECTED - rendering form directly');
+  } else {
+    console.log('❌ CREATE MODE - coordination missing or no id');
+  }
 
   // Check if we're in edit mode - must be done before hooks but hooks must always run
   const isEditMode = !!(coordination && coordination.id);
@@ -454,7 +464,7 @@ export default function CoordinationForm({
         }}
         transition="all 0.2s"
       >
-        Create Coordination Set
+        Create Coordination Set v{COMPONENT_VERSION}
       </Button>
 
       <Modal isOpen={isOpen} onClose={onClose} size="xl">

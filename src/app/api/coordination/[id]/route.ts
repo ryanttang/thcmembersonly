@@ -195,7 +195,7 @@ export async function PUT(
         eventOwnerId: existingCoordination?.event?.ownerId,
       });
     } else {
-      // For regular users, must be owner of the event
+      // For regular users, must be owner of the event OR coordination has no event
       console.log('[PUT] Attempting owner lookup', { 
         coordinationId: id,
         userId: user.id,
@@ -204,9 +204,10 @@ export async function PUT(
       existingCoordination = await prisma.coordination.findFirst({
         where: {
           id: id,
-          event: {
-            ownerId: user.id,
-          },
+          OR: [
+            { eventId: null }, // Coordinations without events can be edited by anyone
+            { event: { ownerId: user.id } }, // Or user owns the event
+          ],
         },
         include: {
           event: {

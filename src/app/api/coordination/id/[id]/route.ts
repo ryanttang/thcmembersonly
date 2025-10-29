@@ -28,6 +28,13 @@ export async function PUT(
 ) {
   try {
     const { id } = params;
+    
+    console.log('[PUT /id/:id] Request START', {
+      coordinationId: id,
+      url: request.url,
+      method: request.method,
+      timestamp: new Date().toISOString(),
+    });
 
     const session = await getServerAuthSession();
     if (!session?.user?.email) {
@@ -52,6 +59,14 @@ export async function PUT(
 
     const canManageAllEvents = user.role === "ADMIN" || user.role === "ORGANIZER";
 
+    console.log('[PUT /id/:id] User check', {
+      userId: user.id,
+      userEmail: user.email,
+      userRole: user.role,
+      canManageAllEvents,
+      coordinationId: id,
+    });
+
     const existingCoordination = canManageAllEvents
       ? await prisma.coordination.findUnique({
           where: { id },
@@ -62,11 +77,26 @@ export async function PUT(
           include: { event: true },
         });
 
+    console.log('[PUT /id/:id] Coordination lookup', {
+      found: !!existingCoordination,
+      coordinationId: id,
+      hasEvent: !!existingCoordination?.event,
+      eventOwnerId: existingCoordination?.event?.ownerId,
+    });
+
     if (!existingCoordination) {
       const directCheck = await prisma.coordination.findUnique({
         where: { id },
         select: { id: true, event: { select: { ownerId: true } } },
       });
+      
+      console.log('[PUT /id/:id] Direct check', {
+        exists: !!directCheck,
+        coordinationId: id,
+        eventOwnerId: directCheck?.event?.ownerId,
+        userId: user.id,
+      });
+      
       if (directCheck) {
         return NextResponse.json(
           {

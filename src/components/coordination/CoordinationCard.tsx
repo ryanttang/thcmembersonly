@@ -89,7 +89,7 @@ export default function CoordinationCard({ coordination, events }: CoordinationC
 
     setIsDeleting(true);
     try {
-      const response = await fetch(`/api/coordination/${coordination.id}`, {
+      const response = await fetch(`/api/coordination/id/${coordination.id}`, {
         method: "DELETE",
       });
 

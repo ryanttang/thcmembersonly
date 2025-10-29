@@ -57,7 +57,7 @@ export async function PUT(
 
     const updateData = updateCoordinationSchema.parse(body);
 
-    const canManageAllEvents = user.role === "ADMIN" || user.role === "ORGANIZER";
+    const canManageAllEvents = ["ADMIN", "ORGANIZER", "STAFF"].includes(user.role as any);
 
     console.log('[PUT /id/:id] User check', {
       userId: user.id,

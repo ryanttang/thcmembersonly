@@ -373,15 +373,18 @@ export default function CoordinationPage({ params }: CoordinationPageProps) {
           </Text>
           
           {coordination.description && (
-            <Text 
-              color="gray.600" 
-              fontSize="md"
-              maxW="2xl"
-              mx="auto"
-              mb={6}
-            >
-              {coordination.description}
-            </Text>
+            <Card shadow="lg" borderRadius="xl" bg="blue.50" border="2px solid" borderColor="blue.200" mb={6}>
+              <CardHeader>
+                <Heading size="md" color="blue.800" fontFamily="'SUSE Mono', monospace" fontWeight="600">
+                  📋 Run of Show
+                </Heading>
+              </CardHeader>
+              <CardBody pt={0}>
+                <Text color="blue.700" whiteSpace="pre-wrap" fontWeight="500">
+                  {coordination.description}
+                </Text>
+              </CardBody>
+            </Card>
           )}
         </Box>
 

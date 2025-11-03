@@ -66,8 +66,16 @@ export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const { id } = params;
   try {
-    const { id } = params;
+    
+    console.log('[POST] Document upload request START', {
+      coordinationId: id,
+      params,
+      requestUrl: request.url,
+      method: request.method,
+    });
+
     const session = await getServerAuthSession();
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -77,23 +85,166 @@ export async function POST(
       where: { email: session.user.email },
     });
 
+    console.log('[POST] User lookup', { 
+      found: !!user,
+      userId: user?.id,
+      userEmail: user?.email,
+      userRole: user?.role,
+    });
+
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Verify the coordination belongs to the user
-    const coordination = await prisma.coordination.findFirst({
-      where: {
-        id: id,
-        event: {
-          ownerId: user.id,
-        },
-      },
+    // Admins, Organizers, and Staff can access all coordinations, others only their own
+    const canManageAllEvents = ["ADMIN", "ORGANIZER", "STAFF"].includes(user.role as any);
+
+    console.log('[POST] Permission check', {
+      canManageAllEvents,
+      userRole: user.role,
+      coordinationId: id,
     });
 
-    if (!coordination) {
-      return NextResponse.json({ error: "Coordination not found" }, { status: 404 });
+    // Try to find the coordination with appropriate permissions
+    let existingCoordination = null;
+    
+    if (canManageAllEvents) {
+      // For admins/organizers/staff, look up without ownership check
+      console.log('[POST] Attempting admin lookup', { coordinationId: id, userRole: user.role });
+      existingCoordination = await prisma.coordination.findUnique({
+        where: { id: id },
+        include: {
+          event: {
+            select: {
+              id: true,
+              title: true,
+              ownerId: true,
+            },
+          },
+        },
+      });
+      
+      console.log('[POST] Admin lookup result', {
+        found: !!existingCoordination,
+        coordinationId: id,
+        coordinationTitle: existingCoordination?.title,
+        eventId: existingCoordination?.eventId,
+        hasEvent: !!existingCoordination?.event,
+        eventOwnerId: existingCoordination?.event?.ownerId,
+      });
+    } else {
+      // For regular users, must be owner of the event
+      console.log('[POST] Attempting owner lookup', { 
+        coordinationId: id,
+        userId: user.id,
+        userRole: user.role,
+      });
+      existingCoordination = await prisma.coordination.findFirst({
+        where: {
+          id: id,
+          event: { ownerId: user.id },
+        },
+        include: {
+          event: {
+            select: {
+              id: true,
+              title: true,
+              ownerId: true,
+            },
+          },
+        },
+      });
+      
+      console.log('[POST] Owner lookup result', {
+        found: !!existingCoordination,
+        coordinationId: id,
+        userId: user.id,
+        coordinationTitle: existingCoordination?.title,
+        eventId: existingCoordination?.eventId,
+        hasEvent: !!existingCoordination?.event,
+      });
     }
+    
+    // If lookup failed but user has permission, do a direct check
+    if (!existingCoordination && canManageAllEvents) {
+      const directCheck = await prisma.coordination.findUnique({
+        where: { id: id },
+        select: { id: true, title: true, eventId: true },
+      });
+      console.error('[POST] Coordination exists but include failed', { 
+        exists: !!directCheck,
+        coordinationId: id,
+        title: directCheck?.title,
+        eventId: directCheck?.eventId,
+      });
+      // If it exists, do a simpler query without include
+      if (directCheck) {
+        existingCoordination = await prisma.coordination.findUnique({
+          where: { id: id },
+        }) as any;
+        if (existingCoordination && directCheck.eventId) {
+          existingCoordination.event = await prisma.event.findUnique({
+            where: { id: directCheck.eventId },
+            select: { id: true, title: true, ownerId: true },
+          });
+        }
+      }
+    }
+
+    if (!existingCoordination) {
+      console.error('[POST] Coordination not editable under current permissions', {
+        coordinationId: id,
+        userId: user.id,
+        userEmail: user.email,
+        userRole: user.role,
+        canManageAllEvents,
+        requestUrl: request.url,
+        timestamp: new Date().toISOString(),
+      });
+
+      // Direct database check to distinguish between not found vs ownership denial
+      const directCheck = await prisma.coordination.findUnique({
+        where: { id: id },
+        select: { 
+          id: true, 
+          title: true, 
+          eventId: true,
+          event: {
+            select: { id: true, title: true, ownerId: true }
+          }
+        }
+      });
+
+      if (directCheck) {
+        // Exists but not visible under current permission rules → explicit 403
+        return NextResponse.json({ 
+          error: "Forbidden",
+          reason: "ownership_denied",
+          details: {
+            coordinationId: id,
+            userId: user.id,
+            userRole: user.role,
+            eventOwnerId: directCheck.event?.ownerId ?? null,
+          }
+        }, { status: 403 });
+      }
+
+      // Truly not found
+      return NextResponse.json({ 
+        error: "Coordination not found",
+        details: {
+          coordinationId: id,
+          userRole: user.role,
+          coordinationExists: false,
+        }
+      }, { status: 404 });
+    }
+
+    console.log('[POST] Coordination found, proceeding with document upload', {
+      coordinationId: id,
+      title: existingCoordination.title,
+      eventId: existingCoordination.eventId,
+    });
 
     const body = await request.json();
     const documentData = createDocumentSchema.parse(body);
@@ -123,6 +274,16 @@ export async function POST(
 
     return NextResponse.json(document, { status: 201 });
   } catch (error) {
+    const coordinationId = id; // Capture for error logging
+    console.error('[POST] Error creating document - DETAILED', {
+      error,
+      errorName: error?.constructor?.name,
+      errorMessage: error instanceof Error ? error.message : String(error),
+      errorStack: error instanceof Error ? error.stack : undefined,
+      coordinationId,
+      timestamp: new Date().toISOString(),
+    });
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Invalid input", details: error.errors },
@@ -130,9 +291,11 @@ export async function POST(
       );
     }
 
-    console.error("Error creating document:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { 
+        error: "Internal server error",
+        message: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }

@@ -477,16 +477,6 @@ export default function CoordinationForm({
                       placeholder="Enter the run of show details..."
                       rows={4}
                     />
-                    {formData.description && (
-                      <Box mt={3} p={4} bg="blue.50" border="2px solid" borderColor="blue.200" borderRadius="md">
-                        <Text fontSize="sm" fontWeight="medium" color="blue.800" mb={2}>
-                          📋 Run of Show Preview
-                        </Text>
-                        <Text color="blue.700" whiteSpace="pre-wrap" fontSize="sm">
-                          {formData.description}
-                        </Text>
-                      </Box>
-                    )}
                   </FormControl>
 
                   <FormControl>
@@ -497,16 +487,6 @@ export default function CoordinationForm({
                       placeholder="Enter special messages and important notes..."
                       rows={3}
                     />
-                    {formData.specialMessage && (
-                      <Box mt={3} p={4} bg="orange.50" border="2px solid" borderColor="orange.200" borderRadius="md">
-                        <Text fontSize="sm" fontWeight="medium" color="orange.800" mb={2}>
-                          ⚠️ Special Messages & Important Notes Preview
-                        </Text>
-                        <Text color="orange.700" whiteSpace="pre-wrap" fontSize="sm" fontWeight="500">
-                          {formData.specialMessage}
-                        </Text>
-                      </Box>
-                    )}
                   </FormControl>
 
                   <FormControl>
@@ -643,16 +623,6 @@ export default function CoordinationForm({
                       placeholder="Enter the run of show details..."
                       rows={4}
                     />
-                    {formData.description && (
-                      <Box mt={3} p={4} bg="blue.50" border="2px solid" borderColor="blue.200" borderRadius="md">
-                        <Text fontSize="sm" fontWeight="medium" color="blue.800" mb={2}>
-                          📋 Run of Show Preview
-                        </Text>
-                        <Text color="blue.700" whiteSpace="pre-wrap" fontSize="sm">
-                          {formData.description}
-                        </Text>
-                      </Box>
-                    )}
                   </FormControl>
 
                   <FormControl>
@@ -663,16 +633,6 @@ export default function CoordinationForm({
                       placeholder="Enter special messages and important notes..."
                       rows={3}
                     />
-                    {formData.specialMessage && (
-                      <Box mt={3} p={4} bg="orange.50" border="2px solid" borderColor="orange.200" borderRadius="md">
-                        <Text fontSize="sm" fontWeight="medium" color="orange.800" mb={2}>
-                          ⚠️ Special Messages & Important Notes Preview
-                        </Text>
-                        <Text color="orange.700" whiteSpace="pre-wrap" fontSize="sm" fontWeight="500">
-                          {formData.specialMessage}
-                        </Text>
-                      </Box>
-                    )}
                   </FormControl>
 
                   <FormControl>

@@ -4,7 +4,7 @@
 // This constant ensures the component updates when deployed
 const COMPONENT_VERSION = "2024-12-19-01";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Button,
   Modal,
@@ -32,8 +32,14 @@ import {
   Alert,
   AlertIcon,
   AlertDescription,
+  Badge,
+  IconButton,
+  Link,
+  Spinner,
+  Center,
 } from "@chakra-ui/react";
 import DocumentUploader from "./DocumentUploader";
+import { CoordinationDocumentType } from "@prisma/client";
 
 interface Event {
   id: string;
@@ -88,6 +94,8 @@ export default function CoordinationForm({
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [isLoading, setIsLoading] = useState(false);
   const [createdCoordinationId, setCreatedCoordinationId] = useState<string | null>(null);
+  const [documents, setDocuments] = useState<any[]>([]);
+  const [isLoadingDocuments, setIsLoadingDocuments] = useState(false);
   
   const [formData, setFormData] = useState({
     eventId: coordination?.eventId || "",
@@ -98,6 +106,22 @@ export default function CoordinationForm({
     pointOfContacts: parsePointOfContacts(coordination?.pointOfContacts),
   });
   const toast = useToast();
+
+  // Fetch documents when in edit mode
+  const fetchDocuments = useCallback(async (coordinationId: string) => {
+    setIsLoadingDocuments(true);
+    try {
+      const response = await fetch(`/api/coordination/${coordinationId}/documents`);
+      if (response.ok) {
+        const data = await response.json();
+        setDocuments(data);
+      }
+    } catch (error) {
+      console.error("Error fetching documents:", error);
+    } finally {
+      setIsLoadingDocuments(false);
+    }
+  }, []);
 
   // Sync form state whenever coordination prop changes (works both inline and modal usage)
   useEffect(() => {
@@ -119,6 +143,8 @@ export default function CoordinationForm({
         specialMessage: coordination.specialMessage || "",
         pointOfContacts: parsedContacts,
       });
+      // Fetch documents for edit mode
+      fetchDocuments(coordination.id);
     } else if (!coordination) {
       // Reset form when coordination is cleared
       setFormData({
@@ -129,8 +155,9 @@ export default function CoordinationForm({
         specialMessage: "",
         pointOfContacts: [],
       });
+      setDocuments([]);
     }
-  }, [coordination, isEditMode]);
+  }, [coordination, isEditMode, fetchDocuments]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -235,10 +262,50 @@ export default function CoordinationForm({
   };
 
   const handleDocumentUploadSuccess = () => {
-    // Close modal and refresh page after document upload
-    onClose();
-    if (onSuccess) onSuccess();
-    setCreatedCoordinationId(null);
+    // Refresh documents list after upload
+    if (coordination?.id) {
+      fetchDocuments(coordination.id);
+    }
+    // For create mode, close modal
+    if (createdCoordinationId) {
+      onClose();
+      if (onSuccess) onSuccess();
+      setCreatedCoordinationId(null);
+    }
+  };
+
+  const handleDocumentDelete = async (documentId: string) => {
+    if (!coordination?.id) return;
+    
+    if (!confirm("Are you sure you want to delete this document?")) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/coordination/${coordination.id}/documents/${documentId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete document");
+      }
+
+      toast({
+        title: "Document deleted",
+        status: "success",
+        duration: 3000,
+      });
+
+      // Refresh documents list
+      fetchDocuments(coordination.id);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to delete document",
+        status: "error",
+        duration: 5000,
+      });
+    }
   };
 
   const handleSkipDocumentUpload = () => {
@@ -248,9 +315,274 @@ export default function CoordinationForm({
     setCreatedCoordinationId(null);
   };
 
+  const getDocumentTypeIcon = (type: string) => {
+    const icons: Record<string, string> = {
+      MAP: "🗺️",
+      RUN_OF_SHOW: "📋",
+      ITINERARY: "📅",
+      SCHEDULE: "⏰",
+      DIAGRAM: "📊",
+      RIDER: "📄",
+      NOTES: "📝",
+      OTHER: "📎",
+    };
+    return icons[type] || "📎";
+  };
+
+  const getDocumentTypeLabel = (type: string) => {
+    const labels: Record<string, string> = {
+      MAP: "Map",
+      RUN_OF_SHOW: "Run of Show",
+      ITINERARY: "Itinerary",
+      SCHEDULE: "Schedule",
+      DIAGRAM: "Diagram",
+      RIDER: "Rider",
+      NOTES: "Notes",
+      OTHER: "Other",
+    };
+    return labels[type] || type;
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  // Render documents list component
+  const renderDocumentsList = () => (
+    <VStack spacing={4} align="stretch">
+      {isLoadingDocuments ? (
+        <Center py={8}>
+          <Spinner size="lg" />
+        </Center>
+      ) : documents.length === 0 ? (
+        <Box p={6} textAlign="center" bg="gray.50" borderRadius="md">
+          <Text color="gray.500">No documents uploaded yet</Text>
+        </Box>
+      ) : (
+        <VStack spacing={3} align="stretch">
+          {documents.map((doc: any) => (
+            <Box
+              key={doc.id}
+              p={4}
+              border="1px solid"
+              borderColor="gray.200"
+              borderRadius="md"
+              _hover={{ borderColor: "gray.300", shadow: "sm" }}
+              transition="all 0.2s"
+            >
+              <VStack align="stretch" spacing={2}>
+                <HStack justify="space-between" align="flex-start">
+                  <HStack spacing={3} flex={1} minW={0}>
+                    <Text fontSize="xl">{getDocumentTypeIcon(doc.type)}</Text>
+                    <VStack align="flex-start" spacing={0} flex={1} minW={0}>
+                      <HStack spacing={2}>
+                        <Text fontSize="sm" fontWeight="medium" color="gray.700">
+                          {doc.title}
+                        </Text>
+                        <Badge colorScheme="blue" variant="subtle" fontSize="xs">
+                          {getDocumentTypeLabel(doc.type)}
+                        </Badge>
+                      </HStack>
+                      {doc.description && (
+                        <Text fontSize="xs" color="gray.600" noOfLines={1}>
+                          {doc.description}
+                        </Text>
+                      )}
+                      <Text fontSize="xs" color="gray.500">
+                        {formatFileSize(doc.fileSize)} • {new Date(doc.createdAt).toLocaleDateString()}
+                      </Text>
+                    </VStack>
+                  </HStack>
+                  <HStack spacing={2}>
+                    <Link href={doc.fileUrl} isExternal>
+                      <IconButton
+                        aria-label="Download document"
+                        icon={<span>⬇️</span>}
+                        size="sm"
+                        variant="ghost"
+                        colorScheme="blue"
+                      />
+                    </Link>
+                    <IconButton
+                      aria-label="Delete document"
+                      icon={<span>🗑️</span>}
+                      size="sm"
+                      variant="ghost"
+                      colorScheme="red"
+                      onClick={() => handleDocumentDelete(doc.id)}
+                    />
+                  </HStack>
+                </HStack>
+              </VStack>
+            </Box>
+          ))}
+        </VStack>
+      )}
+    </VStack>
+  );
+
   // Render form content (used when embedded in another modal like CoordinationCard)
-  const renderFormContent = () => (
-    <>
+  const renderFormContent = () => {
+    // In edit mode, show tabs with Settings, Documents, and Upload
+    if (coordination?.id) {
+      return (
+        <Tabs>
+          <TabList>
+            <Tab>Settings</Tab>
+            <Tab>Documents ({documents.length})</Tab>
+            <Tab>Upload</Tab>
+          </TabList>
+          <TabPanels>
+            {/* Settings Tab */}
+            <TabPanel px={0}>
+              <form onSubmit={handleSubmit}>
+                <VStack spacing={4}>
+                  <FormControl isRequired>
+                    <FormLabel>Event</FormLabel>
+                    <Select
+                      value={formData.eventId}
+                      onChange={(e) => handleInputChange("eventId", e.target.value)}
+                      placeholder="Select an event"
+                    >
+                      {events.map((event) => (
+                        <option key={event.id} value={event.id}>
+                          {event.title} - {new Date(event.startAt).toLocaleDateString('en-US', { 
+                            year: 'numeric', 
+                            month: 'short', 
+                            day: 'numeric' 
+                          })}
+                        </option>
+                      ))}
+                    </Select>
+                  </FormControl>
+
+                  <FormControl isRequired>
+                    <FormLabel>Title</FormLabel>
+                    <Input
+                      value={formData.title}
+                      onChange={(e) => handleInputChange("title", e.target.value)}
+                      placeholder="e.g., VIP Event Coordination"
+                    />
+                  </FormControl>
+
+                  <FormControl>
+                    <FormLabel>Description</FormLabel>
+                    <Textarea
+                      value={formData.description}
+                      onChange={(e) => handleInputChange("description", e.target.value)}
+                      placeholder="Brief description of this coordination set"
+                      rows={3}
+                    />
+                  </FormControl>
+
+                  <FormControl>
+                    <FormLabel>Special Message (Optional)</FormLabel>
+                    <Textarea
+                      value={formData.specialMessage}
+                      onChange={(e) => handleInputChange("specialMessage", e.target.value)}
+                      placeholder="Optional highlighted text for important reminders"
+                      rows={3}
+                    />
+                  </FormControl>
+
+                  <FormControl>
+                    <FormLabel>Notes</FormLabel>
+                    <Textarea
+                      value={formData.notes}
+                      onChange={(e) => handleInputChange("notes", e.target.value)}
+                      placeholder="Additional notes for team members"
+                      rows={4}
+                    />
+                  </FormControl>
+
+                  {/* Point of Contacts */}
+                  <FormControl>
+                    <FormLabel>Point of Contacts</FormLabel>
+                    <VStack spacing={3} align="stretch">
+                      {formData.pointOfContacts.map((contact: any, index: number) => (
+                        <Box key={index} p={4} border="1px solid" borderColor="gray.200" borderRadius="md">
+                          <HStack justify="space-between" align="center" mb={3}>
+                            <Text fontSize="sm" fontWeight="medium" color="gray.700">
+                              Contact {index + 1}
+                            </Text>
+                            <Button
+                              size="xs"
+                              variant="ghost"
+                              colorScheme="red"
+                              onClick={() => removeContact(index)}
+                            >
+                              Remove
+                            </Button>
+                          </HStack>
+                          <VStack spacing={3}>
+                            <Input
+                              value={contact.name}
+                              onChange={(e) => updateContact(index, "name", e.target.value)}
+                              placeholder="Contact Name"
+                            />
+                            <Input
+                              value={contact.number}
+                              onChange={(e) => updateContact(index, "number", e.target.value)}
+                              placeholder="Phone Number"
+                            />
+                            <Input
+                              value={contact.email}
+                              onChange={(e) => updateContact(index, "email", e.target.value)}
+                              placeholder="Email Address"
+                              type="email"
+                            />
+                          </VStack>
+                        </Box>
+                      ))}
+                      <Button
+                        variant="outline"
+                        colorScheme="blue"
+                        onClick={addContact}
+                        leftIcon={<span>+</span>}
+                      >
+                        Add Contact
+                      </Button>
+                    </VStack>
+                  </FormControl>
+
+                  <Button
+                    type="submit"
+                    colorScheme="blue"
+                    isLoading={isLoading}
+                    loadingText="Updating..."
+                    w="full"
+                    size="lg"
+                  >
+                    Update Coordination
+                  </Button>
+                </VStack>
+              </form>
+            </TabPanel>
+
+            {/* Documents Tab */}
+            <TabPanel px={0}>
+              {renderDocumentsList()}
+            </TabPanel>
+
+            {/* Upload Tab */}
+            <TabPanel px={0}>
+              <DocumentUploader 
+                coordinationId={coordination.id}
+                onSuccess={handleDocumentUploadSuccess}
+              />
+            </TabPanel>
+          </TabPanels>
+        </Tabs>
+      );
+    }
+
+    // Create mode - show form or document upload after creation
+    return (
+      <>
       {!createdCoordinationId ? (
         // Show form for creating/editing coordination
         <form onSubmit={handleSubmit}>
@@ -425,7 +757,8 @@ export default function CoordinationForm({
               </VStack>
             )}
       </>
-  );
+    );
+  };
 
   // SIMPLIFIED: If coordination exists, ALWAYS render form (edit mode)
   // If no coordination, render button + modal (create mode)

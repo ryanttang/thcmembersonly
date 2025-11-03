@@ -391,7 +391,7 @@ export default function CoordinationCard({ coordination, events }: CoordinationC
       </Card>
 
       {/* Edit Modal */}
-      <Modal isOpen={isOpen} onClose={onClose} size="lg">
+      <Modal isOpen={isOpen} onClose={onClose} size="xl">
         <ModalOverlay />
         <ModalContent>
           <ModalHeader fontFamily="'SUSE Mono', monospace" fontWeight="600">Edit Coordination Set</ModalHeader>

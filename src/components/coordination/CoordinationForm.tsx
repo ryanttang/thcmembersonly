@@ -490,17 +490,17 @@ export default function CoordinationForm({
                   </FormControl>
 
                   <FormControl>
-                    <FormLabel>Special Message (Optional)</FormLabel>
+                    <FormLabel>Special Messages & Important Notes</FormLabel>
                     <Textarea
                       value={formData.specialMessage}
                       onChange={(e) => handleInputChange("specialMessage", e.target.value)}
-                      placeholder="Optional highlighted text for important reminders"
+                      placeholder="Enter special messages and important notes..."
                       rows={3}
                     />
                     {formData.specialMessage && (
                       <Box mt={3} p={4} bg="orange.50" border="2px solid" borderColor="orange.200" borderRadius="md">
                         <Text fontSize="sm" fontWeight="medium" color="orange.800" mb={2}>
-                          ⚠️ Special Message Preview
+                          ⚠️ Special Messages & Important Notes Preview
                         </Text>
                         <Text color="orange.700" whiteSpace="pre-wrap" fontSize="sm" fontWeight="500">
                           {formData.specialMessage}
@@ -656,17 +656,17 @@ export default function CoordinationForm({
                   </FormControl>
 
                   <FormControl>
-                    <FormLabel>Special Message (Optional)</FormLabel>
+                    <FormLabel>Special Messages & Important Notes</FormLabel>
                     <Textarea
                       value={formData.specialMessage}
                       onChange={(e) => handleInputChange("specialMessage", e.target.value)}
-                      placeholder="Optional highlighted text for important reminders"
+                      placeholder="Enter special messages and important notes..."
                       rows={3}
                     />
                     {formData.specialMessage && (
                       <Box mt={3} p={4} bg="orange.50" border="2px solid" borderColor="orange.200" borderRadius="md">
                         <Text fontSize="sm" fontWeight="medium" color="orange.800" mb={2}>
-                          ⚠️ Special Message Preview
+                          ⚠️ Special Messages & Important Notes Preview
                         </Text>
                         <Text color="orange.700" whiteSpace="pre-wrap" fontSize="sm" fontWeight="500">
                           {formData.specialMessage}

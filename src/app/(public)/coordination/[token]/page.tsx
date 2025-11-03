@@ -457,12 +457,12 @@ export default function CoordinationPage({ params }: CoordinationPageProps) {
           )}
         </Card>
 
-        {/* Special Message */}
+        {/* Special Messages & Important Notes */}
         {coordination.specialMessage && (
           <Card shadow="lg" borderRadius="xl" bg="orange.50" border="2px solid" borderColor="orange.200">
             <CardHeader>
               <Heading size="md" color="orange.800" fontFamily="'SUSE Mono', monospace" fontWeight="600">
-                ⚠️ Important Notice
+                ⚠️ Special Messages & Important Notes
               </Heading>
             </CardHeader>
             <CardBody pt={0}>

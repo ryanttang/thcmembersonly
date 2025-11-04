@@ -98,8 +98,8 @@ export default async function HomePage() {
     });
     
     // Flatten gallery images into a single array with required fields
-    const allImages = galleries.flatMap(gallery =>
-      gallery.images.map(galleryImage => ({
+    const allImages = galleries.flatMap((gallery: typeof galleries[0]) =>
+      gallery.images.map((galleryImage: typeof gallery.images[0]) => ({
         ...galleryImage,
         galleryName: gallery.name,
         galleryId: gallery.id,

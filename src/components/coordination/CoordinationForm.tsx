@@ -41,6 +41,7 @@ import {
   MenuButton,
   MenuList,
   MenuItem,
+  Image,
 } from "@chakra-ui/react";
 import DocumentUploader from "./DocumentUploader";
 import { CoordinationDocumentType } from "@prisma/client";
@@ -73,6 +74,25 @@ const parsePointOfContacts = (contacts: any): any[] => {
   return [];
 };
 
+// Google Maps helper functions
+const getGoogleMapsThumbnailUrl = (address: string): string | null => {
+  if (!address || address.trim() === "") return null;
+  const encodedAddress = encodeURIComponent(address.trim());
+  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+  
+  if (apiKey) {
+    const url = `https://maps.googleapis.com/maps/api/staticmap?center=${encodedAddress}&zoom=15&size=600x300&markers=color:red%7C${encodedAddress}&key=${apiKey}`;
+    return url;
+  }
+  
+  return null;
+};
+
+const getGoogleMapsLink = (address: string): string => {
+  const encodedAddress = encodeURIComponent(address.trim());
+  return `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
+};
+
 // DOMPurify configuration - allow only safe HTML tags
 const sanitizeConfig = {
   ALLOWED_TAGS: ['b', 'i', 'u', 'span', 'ul', 'li'],
@@ -93,7 +113,7 @@ interface NotesFieldProps {
   rows?: number;
 }
 
-function NotesField({ value, onChange, placeholder = "Additional notes for team members", rows = 4 }: NotesFieldProps) {
+function NotesField({ value, onChange, placeholder = "Additional notes for team members", rows = 7 }: NotesFieldProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const insertText = (before: string, after: string = "") => {
@@ -255,6 +275,7 @@ function NotesField({ value, onChange, placeholder = "Additional notes for team 
         onChange={handleChange}
         placeholder={placeholder}
         rows={rows}
+        fontSize="0.95em"
       />
     </VStack>
   );
@@ -470,13 +491,6 @@ export default function CoordinationForm({
     }
   };
 
-  // Helper function to generate Google Maps link
-  const generateGoogleMapsLink = (address: string): string => {
-    if (!address || address.trim() === "") return "";
-    const encodedAddress = encodeURIComponent(address.trim());
-    return `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
-  };
-
   const handleDocumentDelete = async (documentId: string) => {
     if (!coordination?.id) return;
     
@@ -669,6 +683,7 @@ export default function CoordinationForm({
                       value={formData.title}
                       onChange={(e) => handleInputChange("title", e.target.value)}
                       placeholder="e.g., VIP Event Coordination"
+                      fontSize="0.95em"
                     />
                   </FormControl>
 
@@ -678,7 +693,8 @@ export default function CoordinationForm({
                       value={formData.specialMessage}
                       onChange={(e) => handleInputChange("specialMessage", e.target.value)}
                       placeholder="Enter special messages and important notes..."
-                      rows={3}
+                      rows={6}
+                      fontSize="0.95em"
                     />
                   </FormControl>
 
@@ -688,18 +704,61 @@ export default function CoordinationForm({
                       value={formData.location}
                       onChange={(e) => handleInputChange("location", e.target.value)}
                       placeholder="Enter address or location..."
+                      fontSize="0.95em"
                     />
-                    {formData.location && (
-                      <Box mt={2}>
-                        <Link 
-                          href={generateGoogleMapsLink(formData.location)} 
-                          isExternal 
-                          color="blue.500" 
-                          fontSize="sm"
-                          fontWeight="medium"
-                        >
-                          📍 Open in Google Maps
-                        </Link>
+                    {formData.location && formData.location.trim() && (
+                      <Box mt={3}>
+                        {(() => {
+                          const mapThumbnailUrl = getGoogleMapsThumbnailUrl(formData.location);
+                          const mapsLink = getGoogleMapsLink(formData.location);
+                          return (
+                            <Box
+                              as={Link}
+                              href={mapsLink}
+                              isExternal
+                              w="100%"
+                              borderRadius="md"
+                              overflow="hidden"
+                              border="1px solid"
+                              borderColor="gray.200"
+                              _hover={{
+                                borderColor: "blue.400",
+                                shadow: "md",
+                              }}
+                              transition="all 0.2s"
+                              display="block"
+                            >
+                              {mapThumbnailUrl ? (
+                                <Image
+                                  src={mapThumbnailUrl}
+                                  alt={`Map preview of ${formData.location}`}
+                                  w="100%"
+                                  h="200px"
+                                  objectFit="cover"
+                                  fallbackSrc="/placeholder-image.svg"
+                                />
+                              ) : (
+                                <Box
+                                  bg="gray.100"
+                                  h="200px"
+                                  display="flex"
+                                  alignItems="center"
+                                  justifyContent="center"
+                                  flexDirection="column"
+                                  gap={2}
+                                >
+                                  <Text fontSize="2xl">🗺️</Text>
+                                  <Text color="gray.600" fontSize="sm" fontWeight="medium">
+                                    Click to view on Google Maps
+                                  </Text>
+                                  <Text color="gray.500" fontSize="xs">
+                                    {formData.location}
+                                  </Text>
+                                </Box>
+                              )}
+                            </Box>
+                          );
+                        })()}
                       </Box>
                     )}
                   </FormControl>
@@ -710,7 +769,6 @@ export default function CoordinationForm({
                       value={formData.notes}
                       onChange={(value) => handleInputChange("notes", value)}
                       placeholder="Additional notes for team members"
-                      rows={4}
                     />
                   </FormControl>
 
@@ -721,6 +779,7 @@ export default function CoordinationForm({
                       onChange={(e) => handleInputChange("description", e.target.value)}
                       placeholder="Enter the run of show details..."
                       rows={4}
+                      fontSize="0.95em"
                     />
                   </FormControl>
 
@@ -748,17 +807,20 @@ export default function CoordinationForm({
                               value={contact.name}
                               onChange={(e) => updateContact(index, "name", e.target.value)}
                               placeholder="Contact Name"
+                              fontSize="0.95em"
                             />
                             <Input
                               value={contact.number}
                               onChange={(e) => updateContact(index, "number", e.target.value)}
                               placeholder="Phone Number"
+                              fontSize="0.95em"
                             />
                             <Input
                               value={contact.email}
                               onChange={(e) => updateContact(index, "email", e.target.value)}
                               placeholder="Email Address"
                               type="email"
+                              fontSize="0.95em"
                             />
                           </VStack>
                         </Box>
@@ -837,6 +899,7 @@ export default function CoordinationForm({
                       value={formData.title}
                       onChange={(e) => handleInputChange("title", e.target.value)}
                       placeholder="e.g., VIP Event Coordination"
+                      fontSize="0.95em"
                     />
                   </FormControl>
 
@@ -846,7 +909,8 @@ export default function CoordinationForm({
                       value={formData.specialMessage}
                       onChange={(e) => handleInputChange("specialMessage", e.target.value)}
                       placeholder="Enter special messages and important notes..."
-                      rows={3}
+                      rows={6}
+                      fontSize="0.95em"
                     />
                   </FormControl>
 
@@ -856,18 +920,61 @@ export default function CoordinationForm({
                       value={formData.location}
                       onChange={(e) => handleInputChange("location", e.target.value)}
                       placeholder="Enter address or location..."
+                      fontSize="0.95em"
                     />
-                    {formData.location && (
-                      <Box mt={2}>
-                        <Link 
-                          href={generateGoogleMapsLink(formData.location)} 
-                          isExternal 
-                          color="blue.500" 
-                          fontSize="sm"
-                          fontWeight="medium"
-                        >
-                          📍 Open in Google Maps
-                        </Link>
+                    {formData.location && formData.location.trim() && (
+                      <Box mt={3}>
+                        {(() => {
+                          const mapThumbnailUrl = getGoogleMapsThumbnailUrl(formData.location);
+                          const mapsLink = getGoogleMapsLink(formData.location);
+                          return (
+                            <Box
+                              as={Link}
+                              href={mapsLink}
+                              isExternal
+                              w="100%"
+                              borderRadius="md"
+                              overflow="hidden"
+                              border="1px solid"
+                              borderColor="gray.200"
+                              _hover={{
+                                borderColor: "blue.400",
+                                shadow: "md",
+                              }}
+                              transition="all 0.2s"
+                              display="block"
+                            >
+                              {mapThumbnailUrl ? (
+                                <Image
+                                  src={mapThumbnailUrl}
+                                  alt={`Map preview of ${formData.location}`}
+                                  w="100%"
+                                  h="200px"
+                                  objectFit="cover"
+                                  fallbackSrc="/placeholder-image.svg"
+                                />
+                              ) : (
+                                <Box
+                                  bg="gray.100"
+                                  h="200px"
+                                  display="flex"
+                                  alignItems="center"
+                                  justifyContent="center"
+                                  flexDirection="column"
+                                  gap={2}
+                                >
+                                  <Text fontSize="2xl">🗺️</Text>
+                                  <Text color="gray.600" fontSize="sm" fontWeight="medium">
+                                    Click to view on Google Maps
+                                  </Text>
+                                  <Text color="gray.500" fontSize="xs">
+                                    {formData.location}
+                                  </Text>
+                                </Box>
+                              )}
+                            </Box>
+                          );
+                        })()}
                       </Box>
                     )}
                   </FormControl>
@@ -878,7 +985,6 @@ export default function CoordinationForm({
                       value={formData.notes}
                       onChange={(value) => handleInputChange("notes", value)}
                       placeholder="Additional notes for team members"
-                      rows={4}
                     />
                   </FormControl>
 
@@ -889,6 +995,7 @@ export default function CoordinationForm({
                       onChange={(e) => handleInputChange("description", e.target.value)}
                       placeholder="Enter the run of show details..."
                       rows={4}
+                      fontSize="0.95em"
                     />
                   </FormControl>
 
@@ -916,17 +1023,20 @@ export default function CoordinationForm({
                               value={contact.name}
                               onChange={(e) => updateContact(index, "name", e.target.value)}
                               placeholder="Contact Name"
+                              fontSize="0.95em"
                             />
                             <Input
                               value={contact.number}
                               onChange={(e) => updateContact(index, "number", e.target.value)}
                               placeholder="Phone Number"
+                              fontSize="0.95em"
                             />
                             <Input
                               value={contact.email}
                               onChange={(e) => updateContact(index, "email", e.target.value)}
                               placeholder="Email Address"
                               type="email"
+                              fontSize="0.95em"
                             />
                           </VStack>
                         </Box>

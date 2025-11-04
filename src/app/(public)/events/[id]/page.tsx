@@ -4,44 +4,36 @@ import { format } from "date-fns";
 import Link from "next/link";
 import { Event } from "@/types";
 import EventDetailClient from "@/components/events/EventDetailClient";
+import { prisma } from "@/lib/prisma";
 
 // Force dynamic rendering to avoid build-time issues
 export const dynamic = 'force-dynamic';
 
 async function getEvent(id: string): Promise<Event | null> {
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
-  
-  // Check if we're in build mode
-  const isBuildTime = process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL;
-  if (isBuildTime) {
-    return null;
-  }
-  
   try {
     // Check if it's a UUID (ID) or slug
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
     
     if (isUUID) {
-      // Look up by ID
-      const res = await fetch(`${baseUrl}/api/events/${id}`, { 
-        next: { revalidate: 60 } 
+      // Look up by ID (for authenticated users, can access any status)
+      const event = await prisma.event.findUnique({
+        where: { id: id },
+        include: { heroImage: true, images: true, owner: true }
       });
-      if (!res.ok) {
-        return null;
-      }
-      return await res.json();
+      return event as Event | null;
     } else {
       // Look up by slug (for public access, published events only)
-      const res = await fetch(`${baseUrl}/api/events/slug/${id}`, { 
-        next: { revalidate: 60 } 
+      const event = await prisma.event.findFirst({
+        where: { 
+          slug: id,
+          status: "PUBLISHED"
+        },
+        include: { heroImage: true, images: true }
       });
-      if (!res.ok) {
-        return null;
-      }
-      return await res.json();
+      return event as Event | null;
     }
   } catch (error) {
-    console.log('Error fetching event:', error);
+    console.error('Error fetching event:', error);
     return null;
   }
 }

@@ -145,8 +145,14 @@ const getGoogleMapsThumbnailUrl = (address: string): string | null => {
   const encodedAddress = encodeURIComponent(address);
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
   
+  // Debug logging (remove in production if needed)
+  if (typeof window !== 'undefined') {
+    console.log('Google Maps API Key available:', !!apiKey);
+  }
+  
   if (apiKey) {
-    return `https://maps.googleapis.com/maps/api/staticmap?center=${encodedAddress}&zoom=15&size=600x400&markers=color:red%7C${encodedAddress}&key=${apiKey}`;
+    const url = `https://maps.googleapis.com/maps/api/staticmap?center=${encodedAddress}&zoom=15&size=600x400&markers=color:red%7C${encodedAddress}&key=${apiKey}`;
+    return url;
   }
   
   // Fallback: return null to use placeholder or alternative
@@ -524,7 +530,14 @@ export default function CoordinationPage({ params }: CoordinationPageProps) {
                           fallbackSrc="/placeholder-image.svg"
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
+                            console.error('Google Maps image failed to load:', {
+                              url: mapThumbnailUrl,
+                              error: target.src,
+                            });
                             target.src = "/placeholder-image.svg";
+                          }}
+                          onLoad={() => {
+                            console.log('Google Maps image loaded successfully');
                           }}
                         />
                       ) : (

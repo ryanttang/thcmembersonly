@@ -560,16 +560,6 @@ export default function CoordinationPage({ params }: CoordinationPageProps) {
                     </Box>
                   );
                 })()}
-                
-                <Link
-                  href={getGoogleMapsLink(coordination.location)}
-                  isExternal
-                  color="blue.500"
-                  fontWeight="medium"
-                  fontSize="sm"
-                >
-                  Open in Google Maps →
-                </Link>
               </VStack>
             </CardBody>
           </Card>

@@ -222,6 +222,7 @@ export default function CoordinationForm({
           description: "",
           notes: "",
           specialMessage: "",
+          location: "",
           pointOfContacts: [],
         });
       }

@@ -33,6 +33,7 @@ import {
   TabPanel,
   IconButton,
   useBreakpointValue,
+  Grid,
 } from "@chakra-ui/react";
 import { ExternalLinkIcon } from "@chakra-ui/icons";
 import { useState, useEffect } from "react";
@@ -654,17 +655,51 @@ export default function CoordinationPage({ params }: CoordinationPageProps) {
               </Heading>
             </CardHeader>
             <CardBody pt={0}>
-              <VStack spacing={4} align="stretch">
+              <Grid 
+                templateColumns={{ base: "1fr", md: "1fr 1fr" }} 
+                gap={6}
+                alignItems="flex-start"
+              >
+                {/* Left Column: Address and Notes */}
+                <VStack align="flex-start" spacing={4}>
+                  {coordination.staffParkingAddress && (
+                    <Box w="100%">
+                      <Text fontSize="sm" color="gray.600" fontWeight="medium" mb={2}>
+                        Parking Address:
+                      </Text>
+                      <Text color="gray.700" fontWeight="500">
+                        {coordination.staffParkingAddress}
+                      </Text>
+                    </Box>
+                  )}
+                  
+                  {coordination.staffParkingNotes && (
+                    <Box w="100%">
+                      <Text fontSize="sm" color="gray.600" fontWeight="medium" mb={2}>
+                        Parking Directions & Notes:
+                      </Text>
+                      <Box
+                        color="gray.600"
+                        whiteSpace="pre-wrap"
+                        dangerouslySetInnerHTML={{ __html: sanitizeHtml(coordination.staffParkingNotes) }}
+                        sx={{
+                          'b': { fontWeight: 'bold' },
+                          'i': { fontStyle: 'italic' },
+                          'u': { textDecoration: 'underline' },
+                          'ul': { listStyleType: 'disc', paddingLeft: '1.5rem', marginTop: '0.5rem', marginBottom: '0.5rem' },
+                          'li': { marginTop: '0.25rem', marginBottom: '0.25rem' },
+                          'span[style*="font-size: small"]': { fontSize: '0.875rem' },
+                          'span[style*="font-size: medium"]': { fontSize: '1rem' },
+                          'span[style*="font-size: large"]': { fontSize: '1.25rem' },
+                        }}
+                      />
+                    </Box>
+                  )}
+                </VStack>
+
+                {/* Right Column: Map Preview */}
                 {coordination.staffParkingAddress && (
                   <Box>
-                    <Text fontSize="sm" color="gray.600" fontWeight="medium" mb={2}>
-                      Parking Address:
-                    </Text>
-                    <Text color="gray.700" fontWeight="500" mb={3}>
-                      {coordination.staffParkingAddress}
-                    </Text>
-                    
-                    {/* Google Maps Thumbnail */}
                     {(() => {
                       const mapThumbnailUrl = getGoogleMapsThumbnailUrl(coordination.staffParkingAddress);
                       const mapsLink = getGoogleMapsLink(coordination.staffParkingAddress);
@@ -694,6 +729,17 @@ export default function CoordinationPage({ params }: CoordinationPageProps) {
                               h="300px"
                               objectFit="cover"
                               fallbackSrc="/placeholder-image.svg"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                console.error('Google Maps image failed to load:', {
+                                  url: mapThumbnailUrl,
+                                  error: target.src,
+                                });
+                                target.src = "/placeholder-image.svg";
+                              }}
+                              onLoad={() => {
+                                console.log('Google Maps image loaded successfully');
+                              }}
                             />
                           ) : (
                             <Box
@@ -717,30 +763,7 @@ export default function CoordinationPage({ params }: CoordinationPageProps) {
                     })()}
                   </Box>
                 )}
-                
-                {coordination.staffParkingNotes && (
-                  <Box>
-                    <Text fontSize="sm" color="gray.600" fontWeight="medium" mb={2}>
-                      Parking Directions & Notes:
-                    </Text>
-                    <Box
-                      color="gray.600"
-                      whiteSpace="pre-wrap"
-                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(coordination.staffParkingNotes) }}
-                      sx={{
-                        'b': { fontWeight: 'bold' },
-                        'i': { fontStyle: 'italic' },
-                        'u': { textDecoration: 'underline' },
-                        'ul': { listStyleType: 'disc', paddingLeft: '1.5rem', marginTop: '0.5rem', marginBottom: '0.5rem' },
-                        'li': { marginTop: '0.25rem', marginBottom: '0.25rem' },
-                        'span[style*="font-size: small"]': { fontSize: '0.875rem' },
-                        'span[style*="font-size: medium"]': { fontSize: '1rem' },
-                        'span[style*="font-size: large"]': { fontSize: '1.25rem' },
-                      }}
-                    />
-                  </Box>
-                )}
-              </VStack>
+              </Grid>
             </CardBody>
           </Card>
         )}

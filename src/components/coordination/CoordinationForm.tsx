@@ -481,16 +481,6 @@ export default function CoordinationForm({
                   </FormControl>
 
                   <FormControl>
-                    <FormLabel>Run of Show</FormLabel>
-                    <Textarea
-                      value={formData.description}
-                      onChange={(e) => handleInputChange("description", e.target.value)}
-                      placeholder="Enter the run of show details..."
-                      rows={4}
-                    />
-                  </FormControl>
-
-                  <FormControl>
                     <FormLabel>Special Messages & Important Notes</FormLabel>
                     <Textarea
                       value={formData.specialMessage}
@@ -528,6 +518,16 @@ export default function CoordinationForm({
                       value={formData.notes}
                       onChange={(e) => handleInputChange("notes", e.target.value)}
                       placeholder="Additional notes for team members"
+                      rows={4}
+                    />
+                  </FormControl>
+
+                  <FormControl>
+                    <FormLabel>Run of Show</FormLabel>
+                    <Textarea
+                      value={formData.description}
+                      onChange={(e) => handleInputChange("description", e.target.value)}
+                      placeholder="Enter the run of show details..."
                       rows={4}
                     />
                   </FormControl>
@@ -649,16 +649,6 @@ export default function CoordinationForm({
                   </FormControl>
 
                   <FormControl>
-                    <FormLabel>Run of Show</FormLabel>
-                    <Textarea
-                      value={formData.description}
-                      onChange={(e) => handleInputChange("description", e.target.value)}
-                      placeholder="Enter the run of show details..."
-                      rows={4}
-                    />
-                  </FormControl>
-
-                  <FormControl>
                     <FormLabel>Special Messages & Important Notes</FormLabel>
                     <Textarea
                       value={formData.specialMessage}
@@ -696,6 +686,16 @@ export default function CoordinationForm({
                       value={formData.notes}
                       onChange={(e) => handleInputChange("notes", e.target.value)}
                       placeholder="Additional notes for team members"
+                      rows={4}
+                    />
+                  </FormControl>
+
+                  <FormControl>
+                    <FormLabel>Run of Show</FormLabel>
+                    <Textarea
+                      value={formData.description}
+                      onChange={(e) => handleInputChange("description", e.target.value)}
+                      placeholder="Enter the run of show details..."
                       rows={4}
                     />
                   </FormControl>

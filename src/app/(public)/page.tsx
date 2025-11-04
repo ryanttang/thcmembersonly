@@ -8,6 +8,7 @@ import { Box, Heading, Container, VStack, Text, Button, HStack, Image } from "@c
 import { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
+import { prisma } from "@/lib/prisma";
 
 export const metadata: Metadata = {
   title: "THC Members Only Club - Premiere Cannabis Social Club",
@@ -50,42 +51,68 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic';
 
 export default async function HomePage() {
-  // For build time, we'll show an empty state
-  // In production, this will be populated from the API
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
-  
+  // Query database directly for better performance and reliability
   let eventsData = { items: [] };
   let videosData = { videos: [] };
   let galleryData = { allImages: [] };
   
-  // Only fetch data if we're not in build mode and have database connection
-  const isBuildTime = process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL;
-  if (!isBuildTime && process.env.DATABASE_URL) {
-    try {
-      const [eventsRes, videosRes, galleryRes] = await Promise.all([
-        fetch(`${baseUrl}/api/events?status=PUBLISHED&limit=30`, { 
-          next: { revalidate: 60 } 
-        }),
-        fetch(`${baseUrl}/api/videos?published=true&limit=10`, { 
-          next: { revalidate: 60 } 
-        }),
-        fetch(`${baseUrl}/api/galleries/public`, { 
-          next: { revalidate: 60 } 
-        })
-      ]);
-      
-      if (eventsRes.ok) {
-        eventsData = await eventsRes.json();
-      }
-      if (videosRes.ok) {
-        videosData = await videosRes.json();
-      }
-      if (galleryRes.ok) {
-        galleryData = await galleryRes.json();
-      }
-    } catch (error) {
-      console.log('Error fetching data during build:', error);
-    }
+  try {
+    // Fetch events with hero images directly from database
+    const events = await prisma.event.findMany({
+      where: { status: 'PUBLISHED' },
+      include: { heroImage: true },
+      orderBy: { startAt: 'asc' },
+      take: 30,
+    });
+    
+    eventsData = { items: events };
+    
+    // Fetch videos
+    const videos = await prisma.recentEventVideo.findMany({
+      where: { isPublished: true },
+      orderBy: { sortOrder: 'asc', createdAt: 'desc' },
+      take: 10,
+    });
+    
+    videosData = { videos };
+    
+    // Fetch gallery images
+    const galleries = await prisma.gallery.findMany({
+      where: { isPublic: true },
+      include: {
+        event: {
+          select: {
+            id: true,
+            title: true,
+            slug: true,
+          },
+        },
+        images: {
+          include: {
+            image: true,
+          },
+          orderBy: { sortOrder: 'asc' },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    
+    // Flatten gallery images into a single array with required fields
+    const allImages = galleries.flatMap(gallery =>
+      gallery.images.map(galleryImage => ({
+        ...galleryImage,
+        galleryName: gallery.name,
+        galleryId: gallery.id,
+        eventTitle: gallery.event?.title || null,
+        image: galleryImage.image,
+        createdAt: galleryImage.createdAt.toISOString(),
+      }))
+    );
+    
+    galleryData = { allImages };
+  } catch (error) {
+    console.error('Error fetching data:', error);
+    // Continue with empty data if there's an error
   }
   
   return (

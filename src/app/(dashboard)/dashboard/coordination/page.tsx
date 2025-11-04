@@ -30,6 +30,8 @@ export default async function CoordinationPage() {
       notes: true,
       specialMessage: true,
       location: true,
+      staffParkingAddress: true,
+      staffParkingNotes: true,
       pointOfContacts: true,
       shareToken: true,
       slug: true,

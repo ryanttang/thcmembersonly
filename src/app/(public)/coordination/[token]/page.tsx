@@ -557,48 +557,13 @@ export default function CoordinationPage({ params }: CoordinationPageProps) {
           </Card>
         )}
 
-        {/* Load In/Out Times and Location - Side by Side */}
-        {((coordination.loadInTimes || coordination.loadOutTimes) || coordination.location) && (
+        {/* Location and Load In/Out Times - Side by Side */}
+        {(coordination.location || (coordination.loadInTimes || coordination.loadOutTimes)) && (
           <Grid 
             templateColumns={{ base: "1fr", md: "1fr 1fr" }} 
             gap={6}
             sx={{ scrollMarginTop: "100px" }}
           >
-            {/* Load In/Out Times */}
-            {(coordination.loadInTimes || coordination.loadOutTimes) && (
-              <Card id="section-load-times" shadow="md" borderRadius="xl">
-                <CardHeader>
-                  <Heading size="md" color="gray.800" fontFamily="'SUSE Mono', monospace" fontWeight="600">
-                    ⏰ Load In/Out Times
-                  </Heading>
-                </CardHeader>
-                <CardBody pt={0}>
-                  <VStack align="flex-start" spacing={4}>
-                    {coordination.loadInTimes && (
-                      <Box>
-                        <Text fontSize="sm" color="gray.600" fontWeight="medium" mb={2}>
-                          Load In Times:
-                        </Text>
-                        <Text color="gray.700" fontWeight="500">
-                          {formatDateTime(coordination.loadInTimes)}
-                        </Text>
-                      </Box>
-                    )}
-                    {coordination.loadOutTimes && (
-                      <Box>
-                        <Text fontSize="sm" color="gray.600" fontWeight="medium" mb={2}>
-                          Load Out Times:
-                        </Text>
-                        <Text color="gray.700" fontWeight="500">
-                          {formatDateTime(coordination.loadOutTimes)}
-                        </Text>
-                      </Box>
-                    )}
-                  </VStack>
-                </CardBody>
-              </Card>
-            )}
-
             {/* Location */}
             {coordination.location && (
               <Card id="section-location" shadow="md" borderRadius="xl">
@@ -676,6 +641,41 @@ export default function CoordinationPage({ params }: CoordinationPageProps) {
                         </Box>
                       );
                     })()}
+                  </VStack>
+                </CardBody>
+              </Card>
+            )}
+
+            {/* Load In/Out Times */}
+            {(coordination.loadInTimes || coordination.loadOutTimes) && (
+              <Card id="section-load-times" shadow="md" borderRadius="xl">
+                <CardHeader>
+                  <Heading size="md" color="gray.800" fontFamily="'SUSE Mono', monospace" fontWeight="600">
+                    ⏰ Load In/Out Times
+                  </Heading>
+                </CardHeader>
+                <CardBody pt={0}>
+                  <VStack align="flex-start" spacing={4}>
+                    {coordination.loadInTimes && (
+                      <Box>
+                        <Text fontSize="sm" color="gray.600" fontWeight="medium" mb={2}>
+                          Load In Times:
+                        </Text>
+                        <Text color="gray.700" fontWeight="500">
+                          {formatDateTime(coordination.loadInTimes)}
+                        </Text>
+                      </Box>
+                    )}
+                    {coordination.loadOutTimes && (
+                      <Box>
+                        <Text fontSize="sm" color="gray.600" fontWeight="medium" mb={2}>
+                          Load Out Times:
+                        </Text>
+                        <Text color="gray.700" fontWeight="500">
+                          {formatDateTime(coordination.loadOutTimes)}
+                        </Text>
+                      </Box>
+                    )}
                   </VStack>
                 </CardBody>
               </Card>

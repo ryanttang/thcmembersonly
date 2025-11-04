@@ -389,14 +389,6 @@ export default function CoordinationPage({ params }: CoordinationPageProps) {
           >
             {coordination.title}
           </Heading>
-          <Text 
-            color="gray.600" 
-            fontSize="lg" 
-            fontWeight="500"
-            mb={4}
-          >
-            Event Coordination Documents
-          </Text>
           
           {/* Mini Navigation */}
           <Box 
@@ -762,7 +754,7 @@ export default function CoordinationPage({ params }: CoordinationPageProps) {
         {/* Footer */}
         <Box textAlign="center" pt={8}>
           <Text color="gray.400" fontSize="sm">
-            This coordination page is intended for internal staff only. Do not share or distribute.
+            This page is intended for internal staff only. Do not share or distribute. Thank you!
           </Text>
         </Box>
       </VStack>

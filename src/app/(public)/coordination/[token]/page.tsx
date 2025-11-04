@@ -557,120 +557,130 @@ export default function CoordinationPage({ params }: CoordinationPageProps) {
           </Card>
         )}
 
-        {/* Load In/Out Times */}
-        {(coordination.loadInTimes || coordination.loadOutTimes) && (
-          <Card id="section-load-times" shadow="md" borderRadius="xl" sx={{ scrollMarginTop: "100px" }}>
-            <CardHeader>
-              <Heading size="md" color="gray.800" fontFamily="'SUSE Mono', monospace" fontWeight="600">
-                ⏰ Load In/Out Times
-              </Heading>
-            </CardHeader>
-            <CardBody pt={0}>
-              <VStack align="flex-start" spacing={4}>
-                {coordination.loadInTimes && (
-                  <Box>
-                    <Text fontSize="sm" color="gray.600" fontWeight="medium" mb={2}>
-                      Load In Times:
-                    </Text>
-                    <Text color="gray.700" fontWeight="500">
-                      {formatDateTime(coordination.loadInTimes)}
-                    </Text>
-                  </Box>
-                )}
-                {coordination.loadOutTimes && (
-                  <Box>
-                    <Text fontSize="sm" color="gray.600" fontWeight="medium" mb={2}>
-                      Load Out Times:
-                    </Text>
-                    <Text color="gray.700" fontWeight="500">
-                      {formatDateTime(coordination.loadOutTimes)}
-                    </Text>
-                  </Box>
-                )}
-              </VStack>
-            </CardBody>
-          </Card>
-        )}
+        {/* Load In/Out Times and Location - Side by Side */}
+        {((coordination.loadInTimes || coordination.loadOutTimes) || coordination.location) && (
+          <Grid 
+            templateColumns={{ base: "1fr", md: "1fr 1fr" }} 
+            gap={6}
+            sx={{ scrollMarginTop: "100px" }}
+          >
+            {/* Load In/Out Times */}
+            {(coordination.loadInTimes || coordination.loadOutTimes) && (
+              <Card id="section-load-times" shadow="md" borderRadius="xl">
+                <CardHeader>
+                  <Heading size="md" color="gray.800" fontFamily="'SUSE Mono', monospace" fontWeight="600">
+                    ⏰ Load In/Out Times
+                  </Heading>
+                </CardHeader>
+                <CardBody pt={0}>
+                  <VStack align="flex-start" spacing={4}>
+                    {coordination.loadInTimes && (
+                      <Box>
+                        <Text fontSize="sm" color="gray.600" fontWeight="medium" mb={2}>
+                          Load In Times:
+                        </Text>
+                        <Text color="gray.700" fontWeight="500">
+                          {formatDateTime(coordination.loadInTimes)}
+                        </Text>
+                      </Box>
+                    )}
+                    {coordination.loadOutTimes && (
+                      <Box>
+                        <Text fontSize="sm" color="gray.600" fontWeight="medium" mb={2}>
+                          Load Out Times:
+                        </Text>
+                        <Text color="gray.700" fontWeight="500">
+                          {formatDateTime(coordination.loadOutTimes)}
+                        </Text>
+                      </Box>
+                    )}
+                  </VStack>
+                </CardBody>
+              </Card>
+            )}
 
-        {/* Location */}
-        {coordination.location && (
-          <Card id="section-location" shadow="md" borderRadius="xl" sx={{ scrollMarginTop: "100px" }}>
-            <CardHeader>
-              <Heading size="md" color="gray.800" fontFamily="'SUSE Mono', monospace" fontWeight="600">
-                📍 Location
-              </Heading>
-            </CardHeader>
-            <CardBody pt={0}>
-              <VStack align="flex-start" spacing={4}>
-                <Text color="gray.700" fontWeight="500">
-                  {coordination.location}
-                </Text>
-                
-                {/* Google Maps Thumbnail */}
-                {(() => {
-                  const mapThumbnailUrl = getGoogleMapsThumbnailUrl(coordination.location);
-                  const mapsLink = getGoogleMapsLink(coordination.location);
-                  return (
-                    <Box
-                      as={Link}
-                      href={mapsLink}
-                      isExternal
-                      w="100%"
-                      borderRadius="lg"
-                      overflow="hidden"
-                      border="2px solid"
-                      borderColor="gray.200"
-                      _hover={{
-                        borderColor: "blue.400",
-                        transform: "scale(1.01)",
-                        shadow: "lg",
-                      }}
-                      transition="all 0.2s"
-                      cursor="pointer"
-                    >
-                      {mapThumbnailUrl ? (
-                        <Image
-                          src={mapThumbnailUrl}
-                          alt={`Map of ${coordination.location}`}
-                          w="100%"
-                          h="300px"
-                          objectFit="cover"
-                          fallbackSrc="/placeholder-image.svg"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            console.error('Google Maps image failed to load:', {
-                              url: mapThumbnailUrl,
-                              error: target.src,
-                            });
-                            target.src = "/placeholder-image.svg";
-                          }}
-                          onLoad={() => {
-                            console.log('Google Maps image loaded successfully');
-                          }}
-                        />
-                      ) : (
+            {/* Location */}
+            {coordination.location && (
+              <Card id="section-location" shadow="md" borderRadius="xl">
+                <CardHeader>
+                  <Heading size="md" color="gray.800" fontFamily="'SUSE Mono', monospace" fontWeight="600">
+                    📍 Location
+                  </Heading>
+                </CardHeader>
+                <CardBody pt={0}>
+                  <VStack align="flex-start" spacing={4}>
+                    <Text color="gray.700" fontWeight="500">
+                      {coordination.location}
+                    </Text>
+                    
+                    {/* Google Maps Thumbnail */}
+                    {(() => {
+                      const mapThumbnailUrl = getGoogleMapsThumbnailUrl(coordination.location);
+                      const mapsLink = getGoogleMapsLink(coordination.location);
+                      return (
                         <Box
-                          bg="gray.100"
-                          h="300px"
-                          display="flex"
-                          alignItems="center"
-                          justifyContent="center"
-                          position="relative"
+                          as={Link}
+                          href={mapsLink}
+                          isExternal
+                          w="100%"
+                          borderRadius="lg"
+                          overflow="hidden"
+                          borderWidth="2px"
+                          borderStyle="solid"
+                          borderColor="gray.200"
+                          _hover={{
+                            borderColor: "blue.400",
+                            transform: "scale(1.01)",
+                            shadow: "lg",
+                          }}
+                          transition="all 0.2s"
+                          cursor="pointer"
                         >
-                          <VStack spacing={2}>
-                            <Text fontSize="4xl">🗺️</Text>
-                            <Text color="gray.600" fontWeight="medium">
-                              Click to view on Google Maps
-                            </Text>
-                          </VStack>
+                          {mapThumbnailUrl ? (
+                            <Image
+                              src={mapThumbnailUrl}
+                              alt={`Map of ${coordination.location}`}
+                              w="100%"
+                              h="300px"
+                              objectFit="cover"
+                              fallbackSrc="/placeholder-image.svg"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                console.error('Google Maps image failed to load:', {
+                                  url: mapThumbnailUrl,
+                                  error: target.src,
+                                });
+                                target.src = "/placeholder-image.svg";
+                              }}
+                              onLoad={() => {
+                                console.log('Google Maps image loaded successfully');
+                              }}
+                            />
+                          ) : (
+                            <Box
+                              bg="gray.100"
+                              h="300px"
+                              display="flex"
+                              alignItems="center"
+                              justifyContent="center"
+                              position="relative"
+                            >
+                              <VStack spacing={2}>
+                                <Text fontSize="4xl">🗺️</Text>
+                                <Text color="gray.600" fontWeight="medium">
+                                  Click to view on Google Maps
+                                </Text>
+                              </VStack>
+                            </Box>
+                          )}
                         </Box>
-                      )}
-                    </Box>
-                  );
-                })()}
-              </VStack>
-            </CardBody>
-          </Card>
+                      );
+                    })()}
+                  </VStack>
+                </CardBody>
+              </Card>
+            )}
+          </Grid>
         )}
 
         {/* Notes */}

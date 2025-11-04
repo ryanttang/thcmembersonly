@@ -103,6 +103,7 @@ export default function CoordinationForm({
     description: coordination?.description || "",
     notes: coordination?.notes || "",
     specialMessage: coordination?.specialMessage || "",
+    location: coordination?.location || "",
     pointOfContacts: parsePointOfContacts(coordination?.pointOfContacts),
   });
   const toast = useToast();
@@ -141,6 +142,7 @@ export default function CoordinationForm({
         description: coordination.description || "",
         notes: coordination.notes || "",
         specialMessage: coordination.specialMessage || "",
+        location: coordination.location || "",
         pointOfContacts: parsedContacts,
       });
       // Fetch documents for edit mode
@@ -153,6 +155,7 @@ export default function CoordinationForm({
         description: "",
         notes: "",
         specialMessage: "",
+        location: "",
         pointOfContacts: [],
       });
       setDocuments([]);
@@ -272,6 +275,13 @@ export default function CoordinationForm({
       if (onSuccess) onSuccess();
       setCreatedCoordinationId(null);
     }
+  };
+
+  // Helper function to generate Google Maps link
+  const generateGoogleMapsLink = (address: string): string => {
+    if (!address || address.trim() === "") return "";
+    const encodedAddress = encodeURIComponent(address.trim());
+    return `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
   };
 
   const handleDocumentDelete = async (documentId: string) => {
@@ -490,6 +500,28 @@ export default function CoordinationForm({
                   </FormControl>
 
                   <FormControl>
+                    <FormLabel>Location</FormLabel>
+                    <Input
+                      value={formData.location}
+                      onChange={(e) => handleInputChange("location", e.target.value)}
+                      placeholder="Enter address or location..."
+                    />
+                    {formData.location && (
+                      <Box mt={2}>
+                        <Link 
+                          href={generateGoogleMapsLink(formData.location)} 
+                          isExternal 
+                          color="blue.500" 
+                          fontSize="sm"
+                          fontWeight="medium"
+                        >
+                          📍 Open in Google Maps
+                        </Link>
+                      </Box>
+                    )}
+                  </FormControl>
+
+                  <FormControl>
                     <FormLabel>Notes</FormLabel>
                     <Textarea
                       value={formData.notes}
@@ -633,6 +665,28 @@ export default function CoordinationForm({
                       placeholder="Enter special messages and important notes..."
                       rows={3}
                     />
+                  </FormControl>
+
+                  <FormControl>
+                    <FormLabel>Location</FormLabel>
+                    <Input
+                      value={formData.location}
+                      onChange={(e) => handleInputChange("location", e.target.value)}
+                      placeholder="Enter address or location..."
+                    />
+                    {formData.location && (
+                      <Box mt={2}>
+                        <Link 
+                          href={generateGoogleMapsLink(formData.location)} 
+                          isExternal 
+                          color="blue.500" 
+                          fontSize="sm"
+                          fontWeight="medium"
+                        >
+                          📍 Open in Google Maps
+                        </Link>
+                      </Box>
+                    )}
                   </FormControl>
 
                   <FormControl>

@@ -17,6 +17,7 @@ const updateCoordinationSchema = z.object({
   description: z.string().optional(),
   notes: z.string().optional(),
   specialMessage: z.string().optional(),
+  location: z.string().optional(),
   pointOfContacts: z.array(z.object({
     name: z.string().optional().or(z.literal("")),
     number: z.string().optional().or(z.literal("")),

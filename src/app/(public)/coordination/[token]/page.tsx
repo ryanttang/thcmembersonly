@@ -473,6 +473,33 @@ export default function CoordinationPage({ params }: CoordinationPageProps) {
           </Card>
         )}
 
+        {/* Location */}
+        {coordination.location && (
+          <Card shadow="md" borderRadius="xl">
+            <CardHeader>
+              <Heading size="md" color="gray.800" fontFamily="'SUSE Mono', monospace" fontWeight="600">
+                📍 Location
+              </Heading>
+            </CardHeader>
+            <CardBody pt={0}>
+              <VStack align="flex-start" spacing={2}>
+                <Text color="gray.700" fontWeight="500">
+                  {coordination.location}
+                </Text>
+                <Link
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(coordination.location)}`}
+                  isExternal
+                  color="blue.500"
+                  fontWeight="medium"
+                  fontSize="sm"
+                >
+                  Open in Google Maps →
+                </Link>
+              </VStack>
+            </CardBody>
+          </Card>
+        )}
+
         {/* Notes */}
         {coordination.notes && (
           <Card shadow="md" borderRadius="xl">

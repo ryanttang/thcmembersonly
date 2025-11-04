@@ -151,6 +151,7 @@ model Coordination {
   description String?
   notes       String?
   specialMessage String?
+  location    String? // Location/address for Google Maps link
   pointOfContacts Json? // Array of {name, number, email} objects
   
   shareToken  String   @unique @default(cuid())

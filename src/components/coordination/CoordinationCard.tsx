@@ -44,6 +44,7 @@ interface CoordinationCardProps {
     description?: string | null;
     notes?: string | null;
     specialMessage?: string | null;
+    location?: string | null;
     pointOfContacts?: any[] | null;
     shareToken: string;
     slug?: string | null;

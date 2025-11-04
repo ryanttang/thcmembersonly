@@ -557,8 +557,8 @@ export default function CoordinationPage({ params }: CoordinationPageProps) {
           </Card>
         )}
 
-        {/* Location and Load In/Out Times - Side by Side */}
-        {(coordination.location || (coordination.loadInTimes || coordination.loadOutTimes)) && (
+        {/* Load In/Out Times and Location - Side by Side */}
+        {((coordination.loadInTimes || coordination.loadOutTimes) || coordination.location) && (
           <Grid 
             templateColumns={{ base: "1fr", md: "1fr 1fr" }} 
             gap={6}

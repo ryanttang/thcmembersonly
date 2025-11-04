@@ -414,15 +414,16 @@ export default function CoordinationPage({ params }: CoordinationPageProps) {
             mb={6}
             px={4}
           >
-            {[
-              { label: "Events", id: "section-events", show: true },
-              { label: "Special Messages", id: "section-special-messages", show: !!coordination.specialMessage },
-              { label: "Location", id: "section-location", show: !!coordination.location },
-              { label: "Notes", id: "section-notes", show: !!coordination.notes },
-              { label: "Staff Parking", id: "section-staff-parking", show: !!(coordination.staffParkingAddress || coordination.staffParkingNotes) },
-              { label: "Contacts", id: "section-contacts", show: !!(coordination.pointOfContacts && coordination.pointOfContacts.length > 0) },
-              { label: "Documents", id: "section-documents", show: true },
-            ]
+          {[
+            { label: "Events", id: "section-events", show: true },
+            { label: "Special Messages", id: "section-special-messages", show: !!coordination.specialMessage },
+            { label: "Load In/Out Times", id: "section-load-times", show: !!(coordination.loadInTimes || coordination.loadOutTimes) },
+            { label: "Location", id: "section-location", show: !!coordination.location },
+            { label: "Notes", id: "section-notes", show: !!coordination.notes },
+            { label: "Staff Parking", id: "section-staff-parking", show: !!(coordination.staffParkingAddress || coordination.staffParkingNotes) },
+            { label: "Contacts", id: "section-contacts", show: !!(coordination.pointOfContacts && coordination.pointOfContacts.length > 0) },
+            { label: "Documents", id: "section-documents", show: true },
+          ]
             .filter(item => item.show)
             .map((item) => (
               <Button
@@ -533,6 +534,41 @@ export default function CoordinationPage({ params }: CoordinationPageProps) {
               <Text color="orange.700" whiteSpace="pre-wrap" fontWeight="500">
                 {coordination.specialMessage}
               </Text>
+            </CardBody>
+          </Card>
+        )}
+
+        {/* Load In/Out Times */}
+        {(coordination.loadInTimes || coordination.loadOutTimes) && (
+          <Card id="section-load-times" shadow="md" borderRadius="xl" sx={{ scrollMarginTop: "100px" }}>
+            <CardHeader>
+              <Heading size="md" color="gray.800" fontFamily="'SUSE Mono', monospace" fontWeight="600">
+                ⏰ Load In/Out Times
+              </Heading>
+            </CardHeader>
+            <CardBody pt={0}>
+              <VStack align="flex-start" spacing={4}>
+                {coordination.loadInTimes && (
+                  <Box>
+                    <Text fontSize="sm" color="gray.600" fontWeight="medium" mb={2}>
+                      Load In Times:
+                    </Text>
+                    <Text color="gray.700" fontWeight="500">
+                      {coordination.loadInTimes}
+                    </Text>
+                  </Box>
+                )}
+                {coordination.loadOutTimes && (
+                  <Box>
+                    <Text fontSize="sm" color="gray.600" fontWeight="medium" mb={2}>
+                      Load Out Times:
+                    </Text>
+                    <Text color="gray.700" fontWeight="500">
+                      {coordination.loadOutTimes}
+                    </Text>
+                  </Box>
+                )}
+              </VStack>
             </CardBody>
           </Card>
         )}

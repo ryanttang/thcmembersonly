@@ -317,6 +317,8 @@ export default function CoordinationForm({
     notes: coordination?.notes || "",
     specialMessage: coordination?.specialMessage || "",
     location: coordination?.location || "",
+    loadInTimes: coordination?.loadInTimes || "",
+    loadOutTimes: coordination?.loadOutTimes || "",
     staffParkingAddress: coordination?.staffParkingAddress || "",
     staffParkingNotes: coordination?.staffParkingNotes || "",
     pointOfContacts: parsePointOfContacts(coordination?.pointOfContacts),
@@ -348,6 +350,8 @@ export default function CoordinationForm({
         title: coordination.title,
         specialMessage: coordination.specialMessage,
         location: coordination.location,
+        loadInTimes: coordination.loadInTimes,
+        loadOutTimes: coordination.loadOutTimes,
         staffParkingAddress: coordination.staffParkingAddress,
         staffParkingNotes: coordination.staffParkingNotes,
         pointOfContacts: coordination.pointOfContacts,
@@ -361,6 +365,8 @@ export default function CoordinationForm({
         notes: coordination.notes || "",
         specialMessage: coordination.specialMessage || "",
         location: coordination.location || "",
+        loadInTimes: coordination.loadInTimes || "",
+        loadOutTimes: coordination.loadOutTimes || "",
         staffParkingAddress: coordination.staffParkingAddress || "",
         staffParkingNotes: coordination.staffParkingNotes || "",
         pointOfContacts: parsedContacts,
@@ -376,6 +382,8 @@ export default function CoordinationForm({
         notes: "",
         specialMessage: "",
         location: "",
+        loadInTimes: "",
+        loadOutTimes: "",
         staffParkingAddress: "",
         staffParkingNotes: "",
         pointOfContacts: [],
@@ -445,6 +453,8 @@ export default function CoordinationForm({
           notes: "",
           specialMessage: "",
           location: "",
+          loadInTimes: "",
+          loadOutTimes: "",
           staffParkingAddress: "",
           staffParkingNotes: "",
           pointOfContacts: [],
@@ -775,6 +785,26 @@ export default function CoordinationForm({
                   </FormControl>
 
                   <FormControl>
+                    <FormLabel>Load In Times</FormLabel>
+                    <Input
+                      value={formData.loadInTimes}
+                      onChange={(e) => handleInputChange("loadInTimes", e.target.value)}
+                      placeholder="Enter load in times..."
+                      fontSize="0.95em"
+                    />
+                  </FormControl>
+
+                  <FormControl>
+                    <FormLabel>Load Out Times</FormLabel>
+                    <Input
+                      value={formData.loadOutTimes}
+                      onChange={(e) => handleInputChange("loadOutTimes", e.target.value)}
+                      placeholder="Enter load out times..."
+                      fontSize="0.95em"
+                    />
+                  </FormControl>
+
+                  <FormControl>
                     <FormLabel>Notes</FormLabel>
                     <NotesField
                       value={formData.notes}
@@ -1068,6 +1098,26 @@ export default function CoordinationForm({
                         })()}
                       </Box>
                     )}
+                  </FormControl>
+
+                  <FormControl>
+                    <FormLabel>Load In Times</FormLabel>
+                    <Input
+                      value={formData.loadInTimes}
+                      onChange={(e) => handleInputChange("loadInTimes", e.target.value)}
+                      placeholder="Enter load in times..."
+                      fontSize="0.95em"
+                    />
+                  </FormControl>
+
+                  <FormControl>
+                    <FormLabel>Load Out Times</FormLabel>
+                    <Input
+                      value={formData.loadOutTimes}
+                      onChange={(e) => handleInputChange("loadOutTimes", e.target.value)}
+                      placeholder="Enter load out times..."
+                      fontSize="0.95em"
+                    />
                   </FormControl>
 
                   <FormControl>

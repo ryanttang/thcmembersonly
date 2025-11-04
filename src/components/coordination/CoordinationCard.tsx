@@ -45,6 +45,8 @@ interface CoordinationCardProps {
     notes?: string | null;
     specialMessage?: string | null;
     location?: string | null;
+    loadInTimes?: string | null;
+    loadOutTimes?: string | null;
     staffParkingAddress?: string | null;
     staffParkingNotes?: string | null;
     pointOfContacts?: any[] | null;

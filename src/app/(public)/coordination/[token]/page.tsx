@@ -710,9 +710,10 @@ export default function CoordinationPage({ params }: CoordinationPageProps) {
                           isExternal
                           w="100%"
                           borderRadius="lg"
-                          overflow="hidden"
-                          border="2px solid"
+                          borderWidth="2px"
+                          borderStyle="solid"
                           borderColor="gray.200"
+                          overflow="hidden"
                           _hover={{
                             borderColor: "blue.400",
                             transform: "scale(1.01)",
@@ -749,6 +750,7 @@ export default function CoordinationPage({ params }: CoordinationPageProps) {
                               alignItems="center"
                               justifyContent="center"
                               position="relative"
+                              borderRadius="lg"
                             >
                               <VStack spacing={2}>
                                 <Text fontSize="4xl">🗺️</Text>

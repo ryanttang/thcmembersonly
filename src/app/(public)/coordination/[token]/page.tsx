@@ -36,12 +36,25 @@ import {
 } from "@chakra-ui/react";
 import { ExternalLinkIcon } from "@chakra-ui/icons";
 import { useState, useEffect } from "react";
+import DOMPurify from "dompurify";
 
 interface CoordinationPageProps {
   params: {
     token: string;
   };
 }
+
+// DOMPurify configuration - allow only safe HTML tags
+const sanitizeConfig = {
+  ALLOWED_TAGS: ['b', 'i', 'u', 'span', 'ul', 'li'],
+  ALLOWED_ATTR: ['style'],
+};
+
+// Sanitize HTML helper function
+const sanitizeHtml = (html: string): string => {
+  if (typeof window === 'undefined') return html; // Server-side: return as-is
+  return DOMPurify.sanitize(html, sanitizeConfig);
+};
 
 const getDocumentTypeIcon = (type: string) => {
   const icons: Record<string, string> = {
@@ -612,9 +625,21 @@ export default function CoordinationPage({ params }: CoordinationPageProps) {
               </Heading>
             </CardHeader>
             <CardBody pt={0}>
-              <Text color="gray.600" whiteSpace="pre-wrap">
-                {coordination.notes}
-              </Text>
+              <Box
+                color="gray.600"
+                whiteSpace="pre-wrap"
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(coordination.notes) }}
+                sx={{
+                  'b': { fontWeight: 'bold' },
+                  'i': { fontStyle: 'italic' },
+                  'u': { textDecoration: 'underline' },
+                  'ul': { listStyleType: 'disc', paddingLeft: '1.5rem', marginTop: '0.5rem', marginBottom: '0.5rem' },
+                  'li': { marginTop: '0.25rem', marginBottom: '0.25rem' },
+                  'span[style*="font-size: small"]': { fontSize: '0.875rem' },
+                  'span[style*="font-size: medium"]': { fontSize: '1rem' },
+                  'span[style*="font-size: large"]': { fontSize: '1.25rem' },
+                }}
+              />
             </CardBody>
           </Card>
         )}

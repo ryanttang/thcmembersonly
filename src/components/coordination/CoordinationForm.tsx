@@ -4,7 +4,7 @@
 // This constant ensures the component updates when deployed
 const COMPONENT_VERSION = "2024-12-19-01";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Button,
   Modal,
@@ -37,9 +37,14 @@ import {
   Link,
   Spinner,
   Center,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
 } from "@chakra-ui/react";
 import DocumentUploader from "./DocumentUploader";
 import { CoordinationDocumentType } from "@prisma/client";
+import DOMPurify from "dompurify";
 
 interface Event {
   id: string;
@@ -67,6 +72,193 @@ const parsePointOfContacts = (contacts: any): any[] => {
   }
   return [];
 };
+
+// DOMPurify configuration - allow only safe HTML tags
+const sanitizeConfig = {
+  ALLOWED_TAGS: ['b', 'i', 'u', 'span', 'ul', 'li'],
+  ALLOWED_ATTR: ['style'],
+};
+
+// Sanitize HTML helper function
+const sanitizeHtml = (html: string): string => {
+  if (typeof window === 'undefined') return html; // Server-side: return as-is
+  return DOMPurify.sanitize(html, sanitizeConfig);
+};
+
+// Notes formatting toolbar component
+interface NotesFieldProps {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  rows?: number;
+}
+
+function NotesField({ value, onChange, placeholder = "Additional notes for team members", rows = 4 }: NotesFieldProps) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const insertText = (before: string, after: string = "") => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = value.substring(start, end);
+    const beforeText = value.substring(0, start);
+    const afterText = value.substring(end);
+
+    const newText = beforeText + before + selectedText + after + afterText;
+    // Sanitize before updating
+    const sanitized = sanitizeHtml(newText);
+    onChange(sanitized);
+
+    // Restore cursor position
+    setTimeout(() => {
+      if (textarea) {
+        const newCursorPos = start + before.length + selectedText.length + after.length;
+        textarea.setSelectionRange(newCursorPos, newCursorPos);
+        textarea.focus();
+      }
+    }, 0);
+  };
+
+  const applyFormat = (format: string) => {
+    switch (format) {
+      case 'bold':
+        insertText('<b>', '</b>');
+        break;
+      case 'italic':
+        insertText('<i>', '</i>');
+        break;
+      case 'underline':
+        insertText('<u>', '</u>');
+        break;
+      case 'small':
+        insertText('<span style="font-size: small;">', '</span>');
+        break;
+      case 'medium':
+        insertText('<span style="font-size: medium;">', '</span>');
+        break;
+      case 'large':
+        insertText('<span style="font-size: large;">', '</span>');
+        break;
+      case 'bullet':
+        // For bullet points, wrap selected text in <li> tags
+        // If no selection, insert a bullet point
+        const textarea = textareaRef.current;
+        if (!textarea) return;
+        
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const selectedText = value.substring(start, end);
+        const beforeText = value.substring(0, start);
+        const afterText = value.substring(end);
+        
+        let newText: string;
+        if (selectedText.trim()) {
+          // Wrap selected text in <li> tags
+          newText = beforeText + '<li>' + selectedText + '</li>' + afterText;
+        } else {
+          // Insert a new bullet point
+          // Check if we need to wrap in <ul> tags (simplified logic)
+          const lastUlIndex = beforeText.lastIndexOf('<ul>');
+          const lastUlCloseIndex = beforeText.lastIndexOf('</ul>');
+          const needsUl = lastUlIndex === -1 || lastUlCloseIndex > lastUlIndex;
+          
+          if (needsUl) {
+            newText = beforeText + '<ul><li></li></ul>' + afterText;
+          } else {
+            newText = beforeText + '<li></li>' + afterText;
+          }
+        }
+        
+        const sanitized = sanitizeHtml(newText);
+        onChange(sanitized);
+        
+        // Restore cursor position
+        setTimeout(() => {
+          if (textarea) {
+            const newCursorPos = start + (selectedText ? '<li>'.length + selectedText.length + '</li>'.length : '<li></li>'.length);
+            textarea.setSelectionRange(newCursorPos, newCursorPos);
+            textarea.focus();
+          }
+        }, 0);
+        break;
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    // Sanitize on change as well
+    const sanitized = sanitizeHtml(e.target.value);
+    onChange(sanitized);
+  };
+
+  return (
+    <VStack spacing={2} align="stretch">
+      {/* Formatting Toolbar */}
+      <HStack spacing={2} flexWrap="wrap" p={2} bg="gray.50" borderRadius="md" border="1px solid" borderColor="gray.200">
+        <Text fontSize="xs" color="gray.600" fontWeight="medium" mr={2}>
+          Format:
+        </Text>
+        <Button
+          size="xs"
+          variant="outline"
+          onClick={() => applyFormat('bold')}
+          fontWeight="bold"
+          fontSize="xs"
+        >
+          B
+        </Button>
+        <Button
+          size="xs"
+          variant="outline"
+          onClick={() => applyFormat('italic')}
+          fontStyle="italic"
+          fontSize="xs"
+        >
+          I
+        </Button>
+        <Button
+          size="xs"
+          variant="outline"
+          onClick={() => applyFormat('underline')}
+          textDecoration="underline"
+          fontSize="xs"
+        >
+          U
+        </Button>
+        <Box mx={1} h="16px" borderLeft="1px solid" borderColor="gray.300" />
+        <Button
+          size="xs"
+          variant="outline"
+          onClick={() => applyFormat('bullet')}
+          fontSize="xs"
+        >
+          •
+        </Button>
+        <Box mx={1} h="16px" borderLeft="1px solid" borderColor="gray.300" />
+        <Menu>
+          <MenuButton as={Button} size="xs" variant="outline" fontSize="xs">
+            Size
+          </MenuButton>
+          <MenuList>
+            <MenuItem onClick={() => applyFormat('small')}>Small</MenuItem>
+            <MenuItem onClick={() => applyFormat('medium')}>Medium</MenuItem>
+            <MenuItem onClick={() => applyFormat('large')}>Large</MenuItem>
+          </MenuList>
+        </Menu>
+      </HStack>
+
+      {/* Textarea */}
+      <Textarea
+        ref={textareaRef}
+        value={value}
+        onChange={handleChange}
+        placeholder={placeholder}
+        rows={rows}
+      />
+    </VStack>
+  );
+}
 
 export default function CoordinationForm({ 
   events, 
@@ -514,9 +706,9 @@ export default function CoordinationForm({
 
                   <FormControl>
                     <FormLabel>Notes</FormLabel>
-                    <Textarea
+                    <NotesField
                       value={formData.notes}
-                      onChange={(e) => handleInputChange("notes", e.target.value)}
+                      onChange={(value) => handleInputChange("notes", value)}
                       placeholder="Additional notes for team members"
                       rows={4}
                     />
@@ -682,9 +874,9 @@ export default function CoordinationForm({
 
                   <FormControl>
                     <FormLabel>Notes</FormLabel>
-                    <Textarea
+                    <NotesField
                       value={formData.notes}
-                      onChange={(e) => handleInputChange("notes", e.target.value)}
+                      onChange={(value) => handleInputChange("notes", value)}
                       placeholder="Additional notes for team members"
                       rows={4}
                     />

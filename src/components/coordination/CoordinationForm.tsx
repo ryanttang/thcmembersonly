@@ -281,6 +281,30 @@ function NotesField({ value, onChange, placeholder = "Additional notes for team 
   );
 }
 
+// Helper function to format date for datetime-local input (YYYY-MM-DDTHH:mm)
+const formatDateForInput = (dateString: string | null | undefined): string => {
+  if (!dateString) return "";
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "";
+    return date.toISOString().slice(0, 16);
+  } catch {
+    return "";
+  }
+};
+
+// Helper function to parse datetime-local input to ISO string
+const parseDateTimeInput = (inputValue: string): string => {
+  if (!inputValue) return "";
+  try {
+    const date = new Date(inputValue);
+    if (isNaN(date.getTime())) return "";
+    return date.toISOString();
+  } catch {
+    return "";
+  }
+};
+
 export default function CoordinationForm({ 
   events, 
   coordination, 
@@ -317,8 +341,8 @@ export default function CoordinationForm({
     notes: coordination?.notes || "",
     specialMessage: coordination?.specialMessage || "",
     location: coordination?.location || "",
-    loadInTimes: coordination?.loadInTimes || "",
-    loadOutTimes: coordination?.loadOutTimes || "",
+    loadInTimes: formatDateForInput(coordination?.loadInTimes),
+    loadOutTimes: formatDateForInput(coordination?.loadOutTimes),
     staffParkingAddress: coordination?.staffParkingAddress || "",
     staffParkingNotes: coordination?.staffParkingNotes || "",
     pointOfContacts: parsePointOfContacts(coordination?.pointOfContacts),
@@ -365,8 +389,8 @@ export default function CoordinationForm({
         notes: coordination.notes || "",
         specialMessage: coordination.specialMessage || "",
         location: coordination.location || "",
-        loadInTimes: coordination.loadInTimes || "",
-        loadOutTimes: coordination.loadOutTimes || "",
+        loadInTimes: formatDateForInput(coordination.loadInTimes),
+        loadOutTimes: formatDateForInput(coordination.loadOutTimes),
         staffParkingAddress: coordination.staffParkingAddress || "",
         staffParkingNotes: coordination.staffParkingNotes || "",
         pointOfContacts: parsedContacts,
@@ -406,6 +430,8 @@ export default function CoordinationForm({
       // Filter out empty contacts before sending
       const submitData = {
         ...formData,
+        loadInTimes: parseDateTimeInput(formData.loadInTimes),
+        loadOutTimes: parseDateTimeInput(formData.loadOutTimes),
         pointOfContacts: formData.pointOfContacts.filter((contact: any) => 
           (contact.name?.trim() || "") || (contact.number?.trim() || "") || (contact.email?.trim() || "")
         )
@@ -787,9 +813,9 @@ export default function CoordinationForm({
                   <FormControl>
                     <FormLabel>Load In Times</FormLabel>
                     <Input
+                      type="datetime-local"
                       value={formData.loadInTimes}
                       onChange={(e) => handleInputChange("loadInTimes", e.target.value)}
-                      placeholder="Enter load in times..."
                       fontSize="0.95em"
                     />
                   </FormControl>
@@ -797,9 +823,9 @@ export default function CoordinationForm({
                   <FormControl>
                     <FormLabel>Load Out Times</FormLabel>
                     <Input
+                      type="datetime-local"
                       value={formData.loadOutTimes}
                       onChange={(e) => handleInputChange("loadOutTimes", e.target.value)}
-                      placeholder="Enter load out times..."
                       fontSize="0.95em"
                     />
                   </FormControl>
@@ -1103,9 +1129,9 @@ export default function CoordinationForm({
                   <FormControl>
                     <FormLabel>Load In Times</FormLabel>
                     <Input
+                      type="datetime-local"
                       value={formData.loadInTimes}
                       onChange={(e) => handleInputChange("loadInTimes", e.target.value)}
-                      placeholder="Enter load in times..."
                       fontSize="0.95em"
                     />
                   </FormControl>
@@ -1113,9 +1139,9 @@ export default function CoordinationForm({
                   <FormControl>
                     <FormLabel>Load Out Times</FormLabel>
                     <Input
+                      type="datetime-local"
                       value={formData.loadOutTimes}
                       onChange={(e) => handleInputChange("loadOutTimes", e.target.value)}
-                      placeholder="Enter load out times..."
                       fontSize="0.95em"
                     />
                   </FormControl>

@@ -152,6 +152,26 @@ const formatTime = (date: Date) => {
   });
 };
 
+const formatDateTime = (dateString: string | null | undefined): string => {
+  if (!dateString) return "";
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return dateString; // Return original if invalid
+    
+    return date.toLocaleString('en-US', {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+  } catch {
+    return dateString; // Return original if parsing fails
+  }
+};
+
 const getGoogleMapsThumbnailUrl = (address: string): string | null => {
   // Google Maps Static API - requires API key for production
   // For now, we'll use a placeholder approach that still works
@@ -554,7 +574,7 @@ export default function CoordinationPage({ params }: CoordinationPageProps) {
                       Load In Times:
                     </Text>
                     <Text color="gray.700" fontWeight="500">
-                      {coordination.loadInTimes}
+                      {formatDateTime(coordination.loadInTimes)}
                     </Text>
                   </Box>
                 )}
@@ -564,7 +584,7 @@ export default function CoordinationPage({ params }: CoordinationPageProps) {
                       Load Out Times:
                     </Text>
                     <Text color="gray.700" fontWeight="500">
-                      {coordination.loadOutTimes}
+                      {formatDateTime(coordination.loadOutTimes)}
                     </Text>
                   </Box>
                 )}

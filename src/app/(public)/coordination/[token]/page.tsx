@@ -779,6 +779,11 @@ export default function CoordinationPage({ params }: CoordinationPageProps) {
                           borderStyle="solid"
                           borderColor="gray.200"
                           overflow="hidden"
+                          outline="none"
+                          _focus={{
+                            outline: "none",
+                            borderColor: "blue.400",
+                          }}
                           _hover={{
                             borderColor: "blue.400",
                             transform: "scale(1.01)",

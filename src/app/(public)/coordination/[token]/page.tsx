@@ -138,7 +138,7 @@ const formatTime = (date: Date) => {
   });
 };
 
-const getGoogleMapsThumbnailUrl = (address: string): string => {
+const getGoogleMapsThumbnailUrl = (address: string): string | null => {
   // Google Maps Static API - requires API key for production
   // For now, we'll use a placeholder approach that still works
   // Users can add GOOGLE_MAPS_API_KEY to their env if they want to use Static Maps API

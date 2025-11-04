@@ -138,6 +138,26 @@ const formatTime = (date: Date) => {
   });
 };
 
+const getGoogleMapsThumbnailUrl = (address: string): string => {
+  // Google Maps Static API - requires API key for production
+  // For now, we'll use a placeholder approach that still works
+  // Users can add GOOGLE_MAPS_API_KEY to their env if they want to use Static Maps API
+  const encodedAddress = encodeURIComponent(address);
+  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+  
+  if (apiKey) {
+    return `https://maps.googleapis.com/maps/api/staticmap?center=${encodedAddress}&zoom=15&size=600x400&markers=color:red%7C${encodedAddress}&key=${apiKey}`;
+  }
+  
+  // Fallback: return null to use placeholder or alternative
+  return null;
+};
+
+const getGoogleMapsLink = (address: string): string => {
+  const encodedAddress = encodeURIComponent(address);
+  return `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
+};
+
 function DocumentPreview({ document }: { document: any }) {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const modalSize = useBreakpointValue({ base: "full", md: "6xl", lg: "7xl" });
@@ -467,12 +487,69 @@ export default function CoordinationPage({ params }: CoordinationPageProps) {
               </Heading>
             </CardHeader>
             <CardBody pt={0}>
-              <VStack align="flex-start" spacing={2}>
+              <VStack align="flex-start" spacing={4}>
                 <Text color="gray.700" fontWeight="500">
                   {coordination.location}
                 </Text>
+                
+                {/* Google Maps Thumbnail */}
+                {(() => {
+                  const mapThumbnailUrl = getGoogleMapsThumbnailUrl(coordination.location);
+                  const mapsLink = getGoogleMapsLink(coordination.location);
+                  return (
+                    <Box
+                      as={Link}
+                      href={mapsLink}
+                      isExternal
+                      w="100%"
+                      borderRadius="lg"
+                      overflow="hidden"
+                      border="2px solid"
+                      borderColor="gray.200"
+                      _hover={{
+                        borderColor: "blue.400",
+                        transform: "scale(1.01)",
+                        shadow: "lg",
+                      }}
+                      transition="all 0.2s"
+                      cursor="pointer"
+                    >
+                      {mapThumbnailUrl ? (
+                        <Image
+                          src={mapThumbnailUrl}
+                          alt={`Map of ${coordination.location}`}
+                          w="100%"
+                          h="300px"
+                          objectFit="cover"
+                          fallbackSrc="/placeholder-image.svg"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = "/placeholder-image.svg";
+                          }}
+                        />
+                      ) : (
+                        <Box
+                          bg="gray.100"
+                          h="300px"
+                          display="flex"
+                          alignItems="center"
+                          justifyContent="center"
+                          position="relative"
+                        >
+                          <VStack spacing={2}>
+                            <Text fontSize="4xl">🗺️</Text>
+                            <Text color="gray.600" fontWeight="medium">
+                              Click to view on Google Maps
+                            </Text>
+                          </VStack>
+                        </Box>
+                      )}
+                    </Box>
+                  );
+                })()}
+                
                 <Link
-                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(coordination.location)}`}
+                  href={getGoogleMapsLink(coordination.location)}
                   isExternal
                   color="blue.500"
                   fontWeight="medium"

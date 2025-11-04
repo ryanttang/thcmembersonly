@@ -393,10 +393,56 @@ export default function CoordinationPage({ params }: CoordinationPageProps) {
             color="gray.600" 
             fontSize="lg" 
             fontWeight="500"
-            mb={6}
+            mb={4}
           >
             Event Coordination Documents
           </Text>
+          
+          {/* Mini Navigation */}
+          <Box 
+            as="nav" 
+            display="flex" 
+            flexWrap="wrap" 
+            gap={2} 
+            justifyContent="center"
+            mb={6}
+            px={4}
+          >
+            {[
+              { label: "Events", id: "section-events", show: true },
+              { label: "Special Messages", id: "section-special-messages", show: !!coordination.specialMessage },
+              { label: "Location", id: "section-location", show: !!coordination.location },
+              { label: "Notes", id: "section-notes", show: !!coordination.notes },
+              { label: "Contacts", id: "section-contacts", show: !!(coordination.pointOfContacts && coordination.pointOfContacts.length > 0) },
+              { label: "Documents", id: "section-documents", show: true },
+            ]
+            .filter(item => item.show)
+            .map((item) => (
+              <Button
+                key={item.id}
+                size="sm"
+                variant="outline"
+                colorScheme="gray"
+                onClick={() => {
+                  const element = document.getElementById(item.id);
+                  if (element) {
+                    element.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }
+                }}
+                fontSize="xs"
+                px={3}
+                py={1}
+                borderRadius="full"
+                _hover={{
+                  bg: "gray.100",
+                  transform: "translateY(-1px)",
+                }}
+                transition="all 0.2s"
+              >
+                {item.label}
+              </Button>
+            ))}
+          </Box>
         </Box>
 
         {/* Event Flyer */}
@@ -420,7 +466,7 @@ export default function CoordinationPage({ params }: CoordinationPageProps) {
         )}
 
         {/* Event Information */}
-        <Card shadow="lg" borderRadius="xl">
+        <Card id="section-events" shadow="lg" borderRadius="xl" sx={{ scrollMarginTop: "100px" }}>
           <CardHeader>
             <HStack justify="space-between" align="flex-start">
               <VStack align="flex-start" spacing={2}>
@@ -470,7 +516,7 @@ export default function CoordinationPage({ params }: CoordinationPageProps) {
 
         {/* Special Messages & Important Notes */}
         {coordination.specialMessage && (
-          <Card shadow="lg" borderRadius="xl" bg="orange.50" border="2px solid" borderColor="orange.200">
+          <Card id="section-special-messages" shadow="lg" borderRadius="xl" bg="orange.50" border="2px solid" borderColor="orange.200" sx={{ scrollMarginTop: "100px" }}>
             <CardHeader>
               <Heading size="md" color="orange.800" fontFamily="'SUSE Mono', monospace" fontWeight="600">
                 ⚠️ Special Messages & Important Notes
@@ -486,7 +532,7 @@ export default function CoordinationPage({ params }: CoordinationPageProps) {
 
         {/* Location */}
         {coordination.location && (
-          <Card shadow="md" borderRadius="xl">
+          <Card id="section-location" shadow="md" borderRadius="xl" sx={{ scrollMarginTop: "100px" }}>
             <CardHeader>
               <Heading size="md" color="gray.800" fontFamily="'SUSE Mono', monospace" fontWeight="600">
                 📍 Location
@@ -567,7 +613,7 @@ export default function CoordinationPage({ params }: CoordinationPageProps) {
 
         {/* Notes */}
         {coordination.notes && (
-          <Card shadow="md" borderRadius="xl">
+          <Card id="section-notes" shadow="md" borderRadius="xl" sx={{ scrollMarginTop: "100px" }}>
             <CardHeader>
               <Heading size="md" color="gray.800" fontFamily="'SUSE Mono', monospace" fontWeight="600">
                 📝 Notes
@@ -599,7 +645,7 @@ export default function CoordinationPage({ params }: CoordinationPageProps) {
 
         {/* Point of Contacts */}
         {coordination.pointOfContacts && coordination.pointOfContacts.length > 0 && (
-          <Card shadow="md" borderRadius="xl">
+          <Card id="section-contacts" shadow="md" borderRadius="xl" sx={{ scrollMarginTop: "100px" }}>
             <CardHeader>
               <Heading size="md" color="gray.800" fontFamily="'SUSE Mono', monospace" fontWeight="600">
                 📞 Point of Contacts
@@ -637,7 +683,7 @@ export default function CoordinationPage({ params }: CoordinationPageProps) {
         )}
 
         {/* Documents */}
-        <Card shadow="lg" borderRadius="xl">
+        <Card id="section-documents" shadow="lg" borderRadius="xl" sx={{ scrollMarginTop: "100px" }}>
           <CardHeader>
             <Heading size="lg" color="gray.800" fontFamily="'SUSE Mono', monospace" fontWeight="600">
               📋 Coordination Documents

@@ -317,6 +317,8 @@ export default function CoordinationForm({
     notes: coordination?.notes || "",
     specialMessage: coordination?.specialMessage || "",
     location: coordination?.location || "",
+    staffParkingAddress: coordination?.staffParkingAddress || "",
+    staffParkingNotes: coordination?.staffParkingNotes || "",
     pointOfContacts: parsePointOfContacts(coordination?.pointOfContacts),
   });
   const toast = useToast();
@@ -356,6 +358,8 @@ export default function CoordinationForm({
         notes: coordination.notes || "",
         specialMessage: coordination.specialMessage || "",
         location: coordination.location || "",
+        staffParkingAddress: coordination.staffParkingAddress || "",
+        staffParkingNotes: coordination.staffParkingNotes || "",
         pointOfContacts: parsedContacts,
       });
       // Fetch documents for edit mode
@@ -369,6 +373,8 @@ export default function CoordinationForm({
         notes: "",
         specialMessage: "",
         location: "",
+        staffParkingAddress: "",
+        staffParkingNotes: "",
         pointOfContacts: [],
       });
       setDocuments([]);
@@ -436,6 +442,8 @@ export default function CoordinationForm({
           notes: "",
           specialMessage: "",
           location: "",
+          staffParkingAddress: "",
+          staffParkingNotes: "",
           pointOfContacts: [],
         });
       }
@@ -772,6 +780,86 @@ export default function CoordinationForm({
                     />
                   </FormControl>
 
+                  {/* Staff Parking Directions & Notes */}
+                  <FormControl>
+                    <FormLabel>Staff Parking Directions & Notes</FormLabel>
+                    <VStack spacing={3} align="stretch">
+                      <FormControl>
+                        <FormLabel fontSize="sm" fontWeight="normal">Parking Address</FormLabel>
+                        <Input
+                          value={formData.staffParkingAddress}
+                          onChange={(e) => handleInputChange("staffParkingAddress", e.target.value)}
+                          placeholder="Enter parking address..."
+                          fontSize="0.95em"
+                        />
+                        {formData.staffParkingAddress && formData.staffParkingAddress.trim() && (
+                          <Box mt={3}>
+                            {(() => {
+                              const mapThumbnailUrl = getGoogleMapsThumbnailUrl(formData.staffParkingAddress);
+                              const mapsLink = getGoogleMapsLink(formData.staffParkingAddress);
+                              return (
+                                <Box
+                                  as={Link}
+                                  href={mapsLink}
+                                  isExternal
+                                  w="100%"
+                                  borderRadius="md"
+                                  overflow="hidden"
+                                  border="1px solid"
+                                  borderColor="gray.200"
+                                  _hover={{
+                                    borderColor: "blue.400",
+                                    shadow: "md",
+                                  }}
+                                  transition="all 0.2s"
+                                  display="block"
+                                >
+                                  {mapThumbnailUrl ? (
+                                    <Image
+                                      src={mapThumbnailUrl}
+                                      alt={`Map preview of ${formData.staffParkingAddress}`}
+                                      w="100%"
+                                      h="200px"
+                                      objectFit="cover"
+                                      fallbackSrc="/placeholder-image.svg"
+                                    />
+                                  ) : (
+                                    <Box
+                                      bg="gray.100"
+                                      h="200px"
+                                      display="flex"
+                                      alignItems="center"
+                                      justifyContent="center"
+                                      flexDirection="column"
+                                      gap={2}
+                                    >
+                                      <Text fontSize="2xl">🗺️</Text>
+                                      <Text color="gray.600" fontSize="sm" fontWeight="medium">
+                                        Click to view on Google Maps
+                                      </Text>
+                                      <Text color="gray.500" fontSize="xs">
+                                        {formData.staffParkingAddress}
+                                      </Text>
+                                    </Box>
+                                  )}
+                                </Box>
+                              );
+                            })()}
+                          </Box>
+                        )}
+                      </FormControl>
+                      <FormControl>
+                        <FormLabel fontSize="sm" fontWeight="normal">Parking Notes</FormLabel>
+                        <NotesField
+                          value={formData.staffParkingNotes}
+                          onChange={(value) => handleInputChange("staffParkingNotes", value)}
+                          placeholder="Enter parking directions and notes..."
+                          rows={4}
+                        />
+                      </FormControl>
+                    </VStack>
+                  </FormControl>
+
                   <FormControl>
                     <FormLabel>Run of Show</FormLabel>
                     <Textarea
@@ -986,6 +1074,86 @@ export default function CoordinationForm({
                       onChange={(value) => handleInputChange("notes", value)}
                       placeholder="Additional notes for team members"
                     />
+                  </FormControl>
+
+                  {/* Staff Parking Directions & Notes */}
+                  <FormControl>
+                    <FormLabel>Staff Parking Directions & Notes</FormLabel>
+                    <VStack spacing={3} align="stretch">
+                      <FormControl>
+                        <FormLabel fontSize="sm" fontWeight="normal">Parking Address</FormLabel>
+                        <Input
+                          value={formData.staffParkingAddress}
+                          onChange={(e) => handleInputChange("staffParkingAddress", e.target.value)}
+                          placeholder="Enter parking address..."
+                          fontSize="0.95em"
+                        />
+                        {formData.staffParkingAddress && formData.staffParkingAddress.trim() && (
+                          <Box mt={3}>
+                            {(() => {
+                              const mapThumbnailUrl = getGoogleMapsThumbnailUrl(formData.staffParkingAddress);
+                              const mapsLink = getGoogleMapsLink(formData.staffParkingAddress);
+                              return (
+                                <Box
+                                  as={Link}
+                                  href={mapsLink}
+                                  isExternal
+                                  w="100%"
+                                  borderRadius="md"
+                                  overflow="hidden"
+                                  border="1px solid"
+                                  borderColor="gray.200"
+                                  _hover={{
+                                    borderColor: "blue.400",
+                                    shadow: "md",
+                                  }}
+                                  transition="all 0.2s"
+                                  display="block"
+                                >
+                                  {mapThumbnailUrl ? (
+                                    <Image
+                                      src={mapThumbnailUrl}
+                                      alt={`Map preview of ${formData.staffParkingAddress}`}
+                                      w="100%"
+                                      h="200px"
+                                      objectFit="cover"
+                                      fallbackSrc="/placeholder-image.svg"
+                                    />
+                                  ) : (
+                                    <Box
+                                      bg="gray.100"
+                                      h="200px"
+                                      display="flex"
+                                      alignItems="center"
+                                      justifyContent="center"
+                                      flexDirection="column"
+                                      gap={2}
+                                    >
+                                      <Text fontSize="2xl">🗺️</Text>
+                                      <Text color="gray.600" fontSize="sm" fontWeight="medium">
+                                        Click to view on Google Maps
+                                      </Text>
+                                      <Text color="gray.500" fontSize="xs">
+                                        {formData.staffParkingAddress}
+                                      </Text>
+                                    </Box>
+                                  )}
+                                </Box>
+                              );
+                            })()}
+                          </Box>
+                        )}
+                      </FormControl>
+                      <FormControl>
+                        <FormLabel fontSize="sm" fontWeight="normal">Parking Notes</FormLabel>
+                        <NotesField
+                          value={formData.staffParkingNotes}
+                          onChange={(value) => handleInputChange("staffParkingNotes", value)}
+                          placeholder="Enter parking directions and notes..."
+                          rows={4}
+                        />
+                      </FormControl>
+                    </VStack>
                   </FormControl>
 
                   <FormControl>

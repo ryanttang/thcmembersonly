@@ -418,6 +418,7 @@ export default function CoordinationPage({ params }: CoordinationPageProps) {
               { label: "Special Messages", id: "section-special-messages", show: !!coordination.specialMessage },
               { label: "Location", id: "section-location", show: !!coordination.location },
               { label: "Notes", id: "section-notes", show: !!coordination.notes },
+              { label: "Staff Parking", id: "section-staff-parking", show: !!(coordination.staffParkingAddress || coordination.staffParkingNotes) },
               { label: "Contacts", id: "section-contacts", show: !!(coordination.pointOfContacts && coordination.pointOfContacts.length > 0) },
               { label: "Documents", id: "section-documents", show: true },
             ]
@@ -640,6 +641,106 @@ export default function CoordinationPage({ params }: CoordinationPageProps) {
                   'span[style*="font-size: large"]': { fontSize: '1.25rem' },
                 }}
               />
+            </CardBody>
+          </Card>
+        )}
+
+        {/* Staff Parking Directions & Notes */}
+        {(coordination.staffParkingAddress || coordination.staffParkingNotes) && (
+          <Card id="section-staff-parking" shadow="md" borderRadius="xl" sx={{ scrollMarginTop: "100px" }}>
+            <CardHeader>
+              <Heading size="md" color="gray.800" fontFamily="'SUSE Mono', monospace" fontWeight="600">
+                🚗 Staff Parking Directions & Notes
+              </Heading>
+            </CardHeader>
+            <CardBody pt={0}>
+              <VStack spacing={4} align="stretch">
+                {coordination.staffParkingAddress && (
+                  <Box>
+                    <Text fontSize="sm" color="gray.600" fontWeight="medium" mb={2}>
+                      Parking Address:
+                    </Text>
+                    <Text color="gray.700" fontWeight="500" mb={3}>
+                      {coordination.staffParkingAddress}
+                    </Text>
+                    
+                    {/* Google Maps Thumbnail */}
+                    {(() => {
+                      const mapThumbnailUrl = getGoogleMapsThumbnailUrl(coordination.staffParkingAddress);
+                      const mapsLink = getGoogleMapsLink(coordination.staffParkingAddress);
+                      return (
+                        <Box
+                          as={Link}
+                          href={mapsLink}
+                          isExternal
+                          w="100%"
+                          borderRadius="lg"
+                          overflow="hidden"
+                          border="2px solid"
+                          borderColor="gray.200"
+                          _hover={{
+                            borderColor: "blue.400",
+                            transform: "scale(1.01)",
+                            shadow: "lg",
+                          }}
+                          transition="all 0.2s"
+                          cursor="pointer"
+                        >
+                          {mapThumbnailUrl ? (
+                            <Image
+                              src={mapThumbnailUrl}
+                              alt={`Map of ${coordination.staffParkingAddress}`}
+                              w="100%"
+                              h="300px"
+                              objectFit="cover"
+                              fallbackSrc="/placeholder-image.svg"
+                            />
+                          ) : (
+                            <Box
+                              bg="gray.100"
+                              h="300px"
+                              display="flex"
+                              alignItems="center"
+                              justifyContent="center"
+                              position="relative"
+                            >
+                              <VStack spacing={2}>
+                                <Text fontSize="4xl">🗺️</Text>
+                                <Text color="gray.600" fontWeight="medium">
+                                  Click to view on Google Maps
+                                </Text>
+                              </VStack>
+                            </Box>
+                          )}
+                        </Box>
+                      );
+                    })()}
+                  </Box>
+                )}
+                
+                {coordination.staffParkingNotes && (
+                  <Box>
+                    <Text fontSize="sm" color="gray.600" fontWeight="medium" mb={2}>
+                      Parking Directions & Notes:
+                    </Text>
+                    <Box
+                      color="gray.600"
+                      whiteSpace="pre-wrap"
+                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(coordination.staffParkingNotes) }}
+                      sx={{
+                        'b': { fontWeight: 'bold' },
+                        'i': { fontStyle: 'italic' },
+                        'u': { textDecoration: 'underline' },
+                        'ul': { listStyleType: 'disc', paddingLeft: '1.5rem', marginTop: '0.5rem', marginBottom: '0.5rem' },
+                        'li': { marginTop: '0.25rem', marginBottom: '0.25rem' },
+                        'span[style*="font-size: small"]': { fontSize: '0.875rem' },
+                        'span[style*="font-size: medium"]': { fontSize: '1rem' },
+                        'span[style*="font-size: large"]': { fontSize: '1.25rem' },
+                      }}
+                    />
+                  </Box>
+                )}
+              </VStack>
             </CardBody>
           </Card>
         )}

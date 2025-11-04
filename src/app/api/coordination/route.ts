@@ -15,6 +15,8 @@ const createCoordinationSchema = z.object({
   notes: z.string().optional(),
   specialMessage: z.string().optional(),
   location: z.string().optional(),
+  staffParkingAddress: z.string().optional(),
+  staffParkingNotes: z.string().optional(),
   pointOfContacts: z.array(z.object({
     name: z.string().optional().or(z.literal("")),
     number: z.string().optional().or(z.literal("")),
@@ -68,6 +70,8 @@ export async function GET(request: NextRequest) {
         notes: true,
         specialMessage: true,
         location: true,
+        staffParkingAddress: true,
+        staffParkingNotes: true,
         pointOfContacts: true,
         shareToken: true,
         slug: true,
@@ -118,7 +122,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { eventId, title, description, notes, specialMessage, location, pointOfContacts } = createCoordinationSchema.parse(body);
+    const { eventId, title, description, notes, specialMessage, location, staffParkingAddress, staffParkingNotes, pointOfContacts } = createCoordinationSchema.parse(body);
 
     // Admins, Organizers, and Staff can create coordinations for any event
     const canManageAllEvents = ["ADMIN", "ORGANIZER", "STAFF"].includes(user.role as any);
@@ -174,6 +178,8 @@ export async function POST(request: NextRequest) {
         notes,
         specialMessage,
         location,
+        staffParkingAddress,
+        staffParkingNotes,
         pointOfContacts: pointOfContacts || [],
         slug,
       },

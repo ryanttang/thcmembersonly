@@ -71,7 +71,10 @@ export default async function HomePage() {
     // Fetch videos
     const videos = await prisma.recentEventVideo.findMany({
       where: { isPublished: true },
-      orderBy: { sortOrder: 'asc', createdAt: 'desc' },
+      orderBy: [
+        { sortOrder: 'asc' },
+        { createdAt: 'desc' }
+      ],
       take: 10,
     });
     
@@ -293,11 +296,9 @@ export default async function HomePage() {
           zIndex: 0
         }}
       >
-        {videosData.videos && videosData.videos.length > 0 ? (
-          <VideoSlider videos={videosData.videos} />
-        ) : (
-          <VideoSliderSkeleton />
-        )}
+        <Suspense fallback={<VideoSliderSkeleton />}>
+          <VideoSlider videos={videosData.videos || []} />
+        </Suspense>
       </Box>
 
       {/* Gallery Section */}

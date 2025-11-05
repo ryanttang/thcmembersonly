@@ -67,7 +67,16 @@ export default function VideoSlider({ videos }: VideoSliderProps) {
           spacing={6}
           w="100%"
         >
-          {videos.map((video) => (
+          {videos.map((video) => {
+            // Defensive check for videoUrl
+            if (!video.videoUrl || typeof video.videoUrl !== 'string') {
+              console.warn('[VideoSlider] Invalid videoUrl for video:', video.id, video.videoUrl);
+              return null;
+            }
+            
+            const isYouTube = video.videoUrl.includes('youtube.com') || video.videoUrl.includes('youtu.be');
+            
+            return (
             <Box
               key={video.id}
               bg="white"
@@ -78,7 +87,7 @@ export default function VideoSlider({ videos }: VideoSliderProps) {
               <VStack spacing={3} align="stretch">
                 <Box position="relative">
                   <AspectRatio ratio={16 / 9}>
-                    {video.videoUrl.includes('youtube.com') || video.videoUrl.includes('youtu.be') ? (
+                    {isYouTube ? (
                       <Box
                         as="iframe"
                         src={`https://www.youtube.com/embed/${getYouTubeVideoId(video.videoUrl)}?autoplay=0&loop=${video.loop ? 1 : 0}&playlist=${video.loop ? getYouTubeVideoId(video.videoUrl) : ''}&mute=${video.muted ? 1 : 0}&controls=1&rel=0&modestbranding=1&playsinline=1`}
@@ -138,7 +147,8 @@ export default function VideoSlider({ videos }: VideoSliderProps) {
                   </VStack>
                 </VStack>
               </Box>
-            ))}
+            );
+          })}
         </SimpleGrid>
       </VStack>
     </Container>

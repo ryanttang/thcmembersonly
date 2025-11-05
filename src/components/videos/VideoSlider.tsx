@@ -227,7 +227,7 @@ export default function VideoSlider({ videos }: VideoSliderProps) {
               ))}
           </HStack>
 
-          {videos.length > 1 && (
+          {videos.length > 1 && isClient && getSlidesToShow() < videos.length && (
             <>
               <IconButton
                 aria-label="Previous videos"

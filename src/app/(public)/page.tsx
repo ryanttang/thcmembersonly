@@ -127,9 +127,19 @@ export default async function HomePage() {
     
     galleryData = { allImages };
   } catch (error) {
-    console.error('Error fetching data:', error);
+    console.error('[HomePage] Error fetching data:', error);
+    if (error instanceof Error) {
+      console.error('[HomePage] Error message:', error.message);
+      console.error('[HomePage] Error stack:', error.stack);
+    }
     // Continue with empty data if there's an error
   }
+  
+  // Final check before rendering
+  console.log('[HomePage] Final videosData:', {
+    videosCount: videosData.videos.length,
+    hasVideos: videosData.videos.length > 0
+  });
   
   return (
     <VStack spacing={0} align="stretch">

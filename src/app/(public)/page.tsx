@@ -9,6 +9,7 @@ import { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { prisma } from "@/lib/prisma";
+import type { RecentEventVideo } from "@prisma/client";
 
 export const metadata: Metadata = {
   title: "THC Members Only Club - Premiere Cannabis Social Club",
@@ -75,7 +76,7 @@ export default async function HomePage() {
     });
     
     // Filter out videos with invalid URLs
-    const validVideos = videos.filter(video => 
+    const validVideos = videos.filter((video: RecentEventVideo) => 
       video.videoUrl && 
       video.videoUrl.trim() !== '' &&
       (video.videoUrl.includes('youtube.com') || 

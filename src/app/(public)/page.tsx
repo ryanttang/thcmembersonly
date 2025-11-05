@@ -86,8 +86,8 @@ export default async function HomePage() {
     console.log('[HomePage] Fetched videos:', videos.length);
     console.log('[HomePage] Valid videos:', validVideos.length);
     if (validVideos.length > 0) {
-      console.log('[HomePage] Video titles:', validVideos.map(v => v.title));
-      console.log('[HomePage] Video URLs:', validVideos.map(v => v.videoUrl));
+      console.log('[HomePage] Video titles:', validVideos.map((v: RecentEventVideo) => v.title));
+      console.log('[HomePage] Video URLs:', validVideos.map((v: RecentEventVideo) => v.videoUrl));
     }
     
     videosData = { videos: validVideos };

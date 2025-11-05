@@ -280,13 +280,11 @@ export default async function HomePage() {
           zIndex: 0
         }}
       >
-        <Suspense fallback={<VideoSliderSkeleton />}>
-          {videosData.videos && videosData.videos.length > 0 ? (
-            <VideoSlider videos={videosData.videos} />
-          ) : (
-            <VideoSliderSkeleton />
-          )}
-        </Suspense>
+        {videosData.videos && videosData.videos.length > 0 ? (
+          <VideoSlider videos={videosData.videos} />
+        ) : (
+          <VideoSliderSkeleton />
+        )}
       </Box>
 
       {/* Gallery Section */}

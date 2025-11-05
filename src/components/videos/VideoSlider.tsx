@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import {
   Box,
   Heading,
@@ -33,17 +32,6 @@ const getYouTubeVideoId = (url: string): string => {
 };
 
 export default function VideoSlider({ videos }: VideoSliderProps) {
-  const [mounted, setMounted] = useState(false);
-  
-  useEffect(() => {
-    setMounted(true);
-    console.log('[VideoSlider] Mounted. Videos:', videos.length);
-    if (videos.length > 0) {
-      console.log('[VideoSlider] Video titles:', videos.map(v => v.title));
-      console.log('[VideoSlider] Video URLs:', videos.map(v => v.videoUrl));
-    }
-  }, [videos]);
-
   const formatDuration = (seconds?: number) => {
     if (!seconds) return "";
     const mins = Math.floor(seconds / 60);
@@ -51,7 +39,7 @@ export default function VideoSlider({ videos }: VideoSliderProps) {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  if (videos.length === 0) {
+  if (!videos || videos.length === 0) {
     return null;
   }
 

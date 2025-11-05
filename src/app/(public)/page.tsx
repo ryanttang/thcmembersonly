@@ -75,14 +75,20 @@ export default async function HomePage() {
       take: 10,
     });
     
-    // Filter out videos with invalid URLs
+    // Filter out videos with invalid URLs (allow any non-empty URL)
     const validVideos = videos.filter((video: RecentEventVideo) => 
       video.videoUrl && 
-      video.videoUrl.trim() !== '' &&
-      (video.videoUrl.includes('youtube.com') || 
-       video.videoUrl.includes('youtu.be') || 
-       video.videoUrl.startsWith('http'))
+      typeof video.videoUrl === 'string' &&
+      video.videoUrl.trim() !== ''
     );
+    
+    // Log for debugging
+    console.log('[HomePage] Fetched videos:', videos.length);
+    console.log('[HomePage] Valid videos:', validVideos.length);
+    if (validVideos.length > 0) {
+      console.log('[HomePage] Video titles:', validVideos.map(v => v.title));
+      console.log('[HomePage] Video URLs:', validVideos.map(v => v.videoUrl));
+    }
     
     videosData = { videos: validVideos };
     

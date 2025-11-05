@@ -39,6 +39,15 @@ export default function VideoSlider({ videos }: VideoSliderProps) {
 
   const [slidesToShow, setSlidesToShow] = useState(1);
   
+  // Debug logging
+  useEffect(() => {
+    console.log('[VideoSlider] Received videos:', videos.length);
+    if (videos.length > 0) {
+      console.log('[VideoSlider] Video titles:', videos.map(v => v.title));
+      console.log('[VideoSlider] Video URLs:', videos.map(v => v.videoUrl));
+    }
+  }, [videos]);
+  
   useEffect(() => {
     const checkSlidesToShow = () => {
       const width = window.innerWidth;

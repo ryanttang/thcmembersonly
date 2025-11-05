@@ -36,11 +36,12 @@ const getYouTubeVideoId = (url: string): string => {
 
 export default function VideoSlider({ videos }: VideoSliderProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
-
   const [slidesToShow, setSlidesToShow] = useState(1);
+  const [isClient, setIsClient] = useState(false);
   
   // Debug logging
   useEffect(() => {
+    setIsClient(true);
     console.log('[VideoSlider] Received videos:', videos.length);
     if (videos.length > 0) {
       console.log('[VideoSlider] Video titles:', videos.map(v => v.title));
@@ -49,6 +50,8 @@ export default function VideoSlider({ videos }: VideoSliderProps) {
   }, [videos]);
   
   useEffect(() => {
+    if (!isClient) return;
+    
     const checkSlidesToShow = () => {
       const width = window.innerWidth;
       if (width >= 1024) setSlidesToShow(3); // lg
@@ -59,7 +62,7 @@ export default function VideoSlider({ videos }: VideoSliderProps) {
     checkSlidesToShow();
     window.addEventListener('resize', checkSlidesToShow);
     return () => window.removeEventListener('resize', checkSlidesToShow);
-  }, []);
+  }, [isClient]);
 
   const nextSlide = () => {
     setCurrentIndex((prev) => 

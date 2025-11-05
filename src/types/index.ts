@@ -116,6 +116,6 @@ export interface RecentEventVideo {
   autoplay: boolean;
   loop: boolean;
   muted: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: Date | string;
+  updatedAt: Date | string;
 }

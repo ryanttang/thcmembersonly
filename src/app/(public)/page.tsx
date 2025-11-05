@@ -82,6 +82,13 @@ export default async function HomePage() {
       video.videoUrl.trim() !== ''
     );
     
+    // Serialize dates for client component to avoid hydration issues
+    const serializedVideos = validVideos.map((video: RecentEventVideo) => ({
+      ...video,
+      createdAt: video.createdAt.toISOString(),
+      updatedAt: video.updatedAt.toISOString(),
+    }));
+    
     // Log for debugging
     console.log('[HomePage] Fetched videos:', videos.length);
     console.log('[HomePage] Valid videos:', validVideos.length);
@@ -90,7 +97,7 @@ export default async function HomePage() {
       console.log('[HomePage] Video URLs:', validVideos.map((v: RecentEventVideo) => v.videoUrl));
     }
     
-    videosData = { videos: validVideos };
+    videosData = { videos: serializedVideos };
     
     // Fetch gallery images
     const galleries = await prisma.gallery.findMany({

@@ -76,6 +76,29 @@ export default function VideoSlider({ videos }: VideoSliderProps) {
             
             const isYouTube = video.videoUrl.includes('youtube.com') || video.videoUrl.includes('youtu.be');
             
+            // YouTube requires muted=1 for autoplay to work (browser policy)
+            // For looping, we need loop=1 AND playlist=<video_id>
+            const youtubeVideoId = isYouTube ? getYouTubeVideoId(video.videoUrl) : '';
+            const shouldAutoplay = video.autoplay ?? true;
+            const shouldLoop = video.loop ?? true;
+            const shouldMute = video.muted ?? true;
+            
+            // Build YouTube embed URL with proper parameters
+            const youtubeParams = new URLSearchParams({
+              autoplay: shouldAutoplay ? '1' : '0',
+              muted: shouldMute ? '1' : '0',
+              controls: '1',
+              rel: '0',
+              modestbranding: '1',
+              playsinline: '1',
+            });
+            
+            // For looping, add loop and playlist parameters
+            if (shouldLoop && youtubeVideoId) {
+              youtubeParams.set('loop', '1');
+              youtubeParams.set('playlist', youtubeVideoId);
+            }
+            
             return (
             <Box
               key={video.id}
@@ -90,7 +113,7 @@ export default function VideoSlider({ videos }: VideoSliderProps) {
                     {isYouTube ? (
                       <Box
                         as="iframe"
-                        src={`https://www.youtube.com/embed/${getYouTubeVideoId(video.videoUrl)}?autoplay=0&loop=${video.loop ? 1 : 0}&playlist=${video.loop ? getYouTubeVideoId(video.videoUrl) : ''}&mute=${video.muted ? 1 : 0}&controls=1&rel=0&modestbranding=1&playsinline=1`}
+                        src={`https://www.youtube.com/embed/${youtubeVideoId}?${youtubeParams.toString()}`}
                         w="100%"
                         h="100%"
                         borderRadius="md"
@@ -103,9 +126,9 @@ export default function VideoSlider({ videos }: VideoSliderProps) {
                           src={video.videoUrl}
                           poster={video.thumbnailUrl || undefined}
                           controls
-                          autoPlay={false}
-                          loop={video.loop}
-                          muted={video.muted}
+                          autoPlay={shouldAutoplay}
+                          loop={shouldLoop}
+                          muted={shouldMute}
                           playsInline
                           w="100%"
                           h="100%"

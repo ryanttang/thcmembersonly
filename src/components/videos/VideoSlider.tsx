@@ -40,8 +40,12 @@ export default function VideoSlider({ videos }: VideoSliderProps) {
   };
 
   if (!videos || videos.length === 0) {
+    console.log('[VideoSlider] No videos provided');
     return null;
   }
+
+  console.log('[VideoSlider] Rendering', videos.length, 'videos');
+  console.log('[VideoSlider] First video:', videos[0]);
 
   return (
     <Container maxW="7xl" py={8} position="relative" zIndex={1}>
@@ -63,78 +67,83 @@ export default function VideoSlider({ videos }: VideoSliderProps) {
           spacing={6}
           w="100%"
         >
-          {videos.map((video) => (
-            <Box
-              key={video.id}
-              bg="white"
-              borderRadius="lg"
-              boxShadow="md"
-              overflow="hidden"
-            >
-              <VStack spacing={3} align="stretch">
-                <Box position="relative">
-                  <AspectRatio ratio={16 / 9}>
-                    {video.videoUrl.includes('youtube.com') || video.videoUrl.includes('youtu.be') ? (
+          {videos.map((video) => {
+            const videoId = getYouTubeVideoId(video.videoUrl);
+            const isYouTube = (video.videoUrl.includes('youtube.com') || video.videoUrl.includes('youtu.be')) && videoId;
+            
+            return (
+              <Box
+                key={video.id}
+                bg="white"
+                borderRadius="lg"
+                boxShadow="md"
+                overflow="hidden"
+              >
+                <VStack spacing={3} align="stretch">
+                  <Box position="relative">
+                    <AspectRatio ratio={16 / 9}>
+                      {isYouTube ? (
+                        <Box
+                          as="iframe"
+                          src={`https://www.youtube.com/embed/${videoId}?autoplay=0&loop=${video.loop ? 1 : 0}&playlist=${video.loop ? videoId : ''}&mute=${video.muted ? 1 : 0}&controls=1&rel=0&modestbranding=1&playsinline=1`}
+                          w="100%"
+                          h="100%"
+                          borderRadius="md"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                          allowFullScreen
+                        />
+                      ) : (
+                        <Box
+                          as="video"
+                          src={video.videoUrl}
+                          poster={video.thumbnailUrl || undefined}
+                          controls
+                          autoPlay={false}
+                          loop={video.loop}
+                          muted={video.muted}
+                          playsInline
+                          w="100%"
+                          h="100%"
+                          objectFit="cover"
+                          borderRadius="md"
+                        />
+                      )}
+                    </AspectRatio>
+                    {video.duration && (
                       <Box
-                        as="iframe"
-                        src={`https://www.youtube.com/embed/${getYouTubeVideoId(video.videoUrl)}?autoplay=0&loop=${video.loop ? 1 : 0}&playlist=${video.loop ? getYouTubeVideoId(video.videoUrl) : ''}&mute=${video.muted ? 1 : 0}&controls=1&rel=0&modestbranding=1&playsinline=1`}
-                        w="100%"
-                        h="100%"
+                        position="absolute"
+                        bottom={2}
+                        right={2}
+                        bg="blackAlpha.700"
+                        color="white"
+                        px={2}
+                        py={1}
                         borderRadius="md"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                        allowFullScreen
-                      />
-                    ) : (
-                      <Box
-                        as="video"
-                        src={video.videoUrl}
-                        poster={video.thumbnailUrl || undefined}
-                        controls
-                        autoPlay={false}
-                        loop={video.loop}
-                        muted={video.muted}
-                        playsInline
-                        w="100%"
-                        h="100%"
-                        objectFit="cover"
-                        borderRadius="md"
-                      />
+                        fontSize="xs"
+                      >
+                        {formatDuration(video.duration)}
+                      </Box>
                     )}
-                  </AspectRatio>
-                  {video.duration && (
-                    <Box
-                      position="absolute"
-                      bottom={2}
-                      right={2}
-                      bg="blackAlpha.700"
-                      color="white"
-                      px={2}
-                      py={1}
-                      borderRadius="md"
-                      fontSize="xs"
+                  </Box>
+                  <VStack spacing={2} px={4} pb={4} align="stretch">
+                    <Heading 
+                      size="md" 
+                      noOfLines={2}
+                      fontFamily="'SUSE Mono', monospace"
+                      fontWeight="600"
                     >
-                      {formatDuration(video.duration)}
-                    </Box>
-                  )}
-                </Box>
-                <VStack spacing={2} px={4} pb={4} align="stretch">
-                  <Heading 
-                    size="md" 
-                    noOfLines={2}
-                    fontFamily="'SUSE Mono', monospace"
-                    fontWeight="600"
-                  >
-                    {video.title}
-                  </Heading>
-                  {video.caption && (
-                    <Text fontSize="sm" color="gray.600" noOfLines={3}>
-                      {video.caption}
-                    </Text>
-                  )}
+                      {video.title}
+                    </Heading>
+                    {video.caption && (
+                      <Text fontSize="sm" color="gray.600" noOfLines={3}>
+                        {video.caption}
+                      </Text>
+                    )}
+                  </VStack>
                 </VStack>
-              </VStack>
-            </Box>
-          ))}
+              </Box>
+            );
+          })}
         </SimpleGrid>
       </VStack>
     </Container>

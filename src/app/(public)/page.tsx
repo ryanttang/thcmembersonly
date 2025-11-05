@@ -82,9 +82,20 @@ export default async function HomePage() {
       video.videoUrl.trim() !== ''
     );
     
-    // Serialize dates for client component to avoid hydration issues
+    // Serialize videos properly for client component - only include needed properties
     const serializedVideos = validVideos.map((video: RecentEventVideo) => ({
-      ...video,
+      id: video.id,
+      title: video.title,
+      caption: video.caption || null,
+      videoUrl: video.videoUrl,
+      videoType: video.videoType,
+      thumbnailUrl: video.thumbnailUrl || null,
+      duration: video.duration || null,
+      sortOrder: video.sortOrder,
+      isPublished: video.isPublished,
+      autoplay: video.autoplay,
+      loop: video.loop,
+      muted: video.muted,
       createdAt: video.createdAt.toISOString(),
       updatedAt: video.updatedAt.toISOString(),
     }));

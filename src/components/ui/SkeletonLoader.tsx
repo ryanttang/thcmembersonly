@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Skeleton, SkeletonText, VStack, HStack, SimpleGrid } from "@chakra-ui/react";
+import { Box, Skeleton, SkeletonText, VStack, HStack, SimpleGrid, Container } from "@chakra-ui/react";
 
 export function EventCardSkeleton() {
   return (
@@ -69,17 +69,20 @@ export function VideoCardSkeleton() {
 
 export function VideoSliderSkeleton() {
   return (
-    <VStack spacing={8} align="stretch">
-      <Box textAlign="center">
-        <Skeleton height="40px" width="300px" mx="auto" mb={4} />
-        <Skeleton height="20px" width="500px" mx="auto" />
-      </Box>
-      <HStack spacing={4} align="stretch">
-        <VideoCardSkeleton />
-        <VideoCardSkeleton />
-        <VideoCardSkeleton />
-      </HStack>
-    </VStack>
+    <Container maxW="7xl" py={8} position="relative" zIndex={1}>
+      <VStack spacing={8} align="stretch">
+        <Box textAlign="left">
+          <Skeleton height="40px" width="300px" mb={4} />
+        </Box>
+        <Box position="relative">
+          <HStack spacing={4} align="stretch" overflow="hidden">
+            <VideoCardSkeleton />
+            <VideoCardSkeleton />
+            <VideoCardSkeleton />
+          </HStack>
+        </Box>
+      </VStack>
+    </Container>
   );
 }
 

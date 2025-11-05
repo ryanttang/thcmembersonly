@@ -74,7 +74,16 @@ export default async function HomePage() {
       take: 10,
     });
     
-    videosData = { videos };
+    // Filter out videos with invalid URLs
+    const validVideos = videos.filter(video => 
+      video.videoUrl && 
+      video.videoUrl.trim() !== '' &&
+      (video.videoUrl.includes('youtube.com') || 
+       video.videoUrl.includes('youtu.be') || 
+       video.videoUrl.startsWith('http'))
+    );
+    
+    videosData = { videos: validVideos };
     
     // Fetch gallery images
     const galleries = await prisma.gallery.findMany({

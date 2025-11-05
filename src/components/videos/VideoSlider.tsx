@@ -79,7 +79,7 @@ export default function VideoSlider({ videos }: VideoSliderProps) {
   }
 
   return (
-    <Container maxW="7xl" py={8}>
+    <Container maxW="7xl" py={8} position="relative" zIndex={1}>
       <VStack spacing={8} align="stretch">
         <Box textAlign="left">
           <Heading 
@@ -145,7 +145,7 @@ export default function VideoSlider({ videos }: VideoSliderProps) {
                   <VStack spacing={0} align="stretch">
                     <Box position="relative">
                       <AspectRatio ratio={16 / 9}>
-                        {video.videoUrl.includes('youtube.com') || video.videoUrl.includes('youtu.be') ? (
+                        {(video.videoUrl.includes('youtube.com') || video.videoUrl.includes('youtu.be')) && getYouTubeVideoId(video.videoUrl) ? (
                           <Box
                             as="iframe"
                             src={`https://www.youtube.com/embed/${getYouTubeVideoId(video.videoUrl)}?autoplay=${video.autoplay ? 1 : 0}&loop=${video.loop ? 1 : 0}&playlist=${video.loop ? getYouTubeVideoId(video.videoUrl) : ''}&mute=${video.muted ? 1 : 0}&controls=1&rel=0&modestbranding=1&playsinline=1`}
@@ -155,7 +155,7 @@ export default function VideoSlider({ videos }: VideoSliderProps) {
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                             allowFullScreen
                           />
-                        ) : (
+                        ) : video.videoUrl && video.videoUrl.trim() !== '' ? (
                           <Box
                             as="video"
                             src={video.videoUrl}
@@ -170,6 +170,18 @@ export default function VideoSlider({ videos }: VideoSliderProps) {
                             objectFit="cover"
                             borderRadius="lg"
                           />
+                        ) : (
+                          <Box
+                            w="100%"
+                            h="100%"
+                            bg="gray.200"
+                            display="flex"
+                            alignItems="center"
+                            justifyContent="center"
+                            borderRadius="lg"
+                          >
+                            <Text color="gray.500" fontSize="sm">Invalid video URL</Text>
+                          </Box>
                         )}
                       </AspectRatio>
                       {video.duration && (

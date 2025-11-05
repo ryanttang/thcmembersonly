@@ -775,17 +775,13 @@ export default function CoordinationPage({ params }: CoordinationPageProps) {
                           isExternal
                           w="100%"
                           borderRadius="lg"
-                          borderWidth="2px"
-                          borderStyle="solid"
-                          borderColor="gray.200"
                           overflow="hidden"
                           outline="none"
+                          userSelect="none"
                           _focus={{
                             outline: "none",
-                            borderColor: "blue.400",
                           }}
                           _hover={{
-                            borderColor: "blue.400",
                             transform: "scale(1.01)",
                             shadow: "lg",
                           }}
@@ -800,6 +796,8 @@ export default function CoordinationPage({ params }: CoordinationPageProps) {
                               h="300px"
                               objectFit="cover"
                               fallbackSrc="/placeholder-image.svg"
+                              userSelect="none"
+                              draggable={false}
                               onError={(e) => {
                                 const target = e.target as HTMLImageElement;
                                 console.error('Google Maps image failed to load:', {

@@ -83,19 +83,20 @@ export default async function HomePage() {
     );
     
     // Serialize videos properly for client component - only include needed properties
+    // Use explicit type conversions to ensure proper serialization
     const serializedVideos = validVideos.map((video: RecentEventVideo) => ({
-      id: video.id,
-      title: video.title,
-      caption: video.caption || null,
-      videoUrl: video.videoUrl,
-      videoType: video.videoType,
-      thumbnailUrl: video.thumbnailUrl || null,
-      duration: video.duration || null,
-      sortOrder: video.sortOrder,
-      isPublished: video.isPublished,
-      autoplay: video.autoplay,
-      loop: video.loop,
-      muted: video.muted,
+      id: String(video.id),
+      title: String(video.title),
+      caption: video.caption ? String(video.caption) : null,
+      videoUrl: String(video.videoUrl),
+      videoType: (video.videoType === 'UPLOADED' || video.videoType === 'EXTERNAL') ? video.videoType : 'EXTERNAL' as 'UPLOADED' | 'EXTERNAL',
+      thumbnailUrl: video.thumbnailUrl ? String(video.thumbnailUrl) : null,
+      duration: video.duration ? Number(video.duration) : null,
+      sortOrder: Number(video.sortOrder),
+      isPublished: Boolean(video.isPublished),
+      autoplay: Boolean(video.autoplay ?? true),
+      loop: Boolean(video.loop ?? true),
+      muted: Boolean(video.muted ?? true),
       createdAt: video.createdAt.toISOString(),
       updatedAt: video.updatedAt.toISOString(),
     }));
@@ -106,6 +107,7 @@ export default async function HomePage() {
     if (validVideos.length > 0) {
       console.log('[HomePage] Video titles:', validVideos.map((v: RecentEventVideo) => v.title));
       console.log('[HomePage] Video URLs:', validVideos.map((v: RecentEventVideo) => v.videoUrl));
+      console.log('[HomePage] Serialized videos sample:', JSON.stringify(serializedVideos[0], null, 2));
     }
     
     videosData = { videos: serializedVideos };

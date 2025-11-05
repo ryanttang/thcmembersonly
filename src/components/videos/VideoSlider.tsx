@@ -67,32 +67,28 @@ export default function VideoSlider({ videos }: VideoSliderProps) {
           spacing={6}
           w="100%"
         >
-          {videos.map((video) => {
-            const videoId = getYouTubeVideoId(video.videoUrl);
-            const isYouTube = (video.videoUrl.includes('youtube.com') || video.videoUrl.includes('youtu.be')) && videoId;
-            
-            return (
-              <Box
-                key={video.id}
-                bg="white"
-                borderRadius="lg"
-                boxShadow="md"
-                overflow="hidden"
-              >
-                <VStack spacing={3} align="stretch">
-                  <Box position="relative">
-                    <AspectRatio ratio={16 / 9}>
-                      {isYouTube ? (
-                        <Box
-                          as="iframe"
-                          src={`https://www.youtube.com/embed/${videoId}?autoplay=0&loop=${video.loop ? 1 : 0}&playlist=${video.loop ? videoId : ''}&mute=${video.muted ? 1 : 0}&controls=1&rel=0&modestbranding=1&playsinline=1`}
-                          w="100%"
-                          h="100%"
-                          borderRadius="md"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                          allowFullScreen
-                        />
-                      ) : (
+          {videos.map((video) => (
+            <Box
+              key={video.id}
+              bg="white"
+              borderRadius="lg"
+              boxShadow="md"
+              overflow="hidden"
+            >
+              <VStack spacing={3} align="stretch">
+                <Box position="relative">
+                  <AspectRatio ratio={16 / 9}>
+                    {video.videoUrl.includes('youtube.com') || video.videoUrl.includes('youtu.be') ? (
+                      <Box
+                        as="iframe"
+                        src={`https://www.youtube.com/embed/${getYouTubeVideoId(video.videoUrl)}?autoplay=0&loop=${video.loop ? 1 : 0}&playlist=${video.loop ? getYouTubeVideoId(video.videoUrl) : ''}&mute=${video.muted ? 1 : 0}&controls=1&rel=0&modestbranding=1&playsinline=1`}
+                        w="100%"
+                        h="100%"
+                        borderRadius="md"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowFullScreen
+                      />
+                    ) : (
                         <Box
                           as="video"
                           src={video.videoUrl}
@@ -142,8 +138,7 @@ export default function VideoSlider({ videos }: VideoSliderProps) {
                   </VStack>
                 </VStack>
               </Box>
-            );
-          })}
+            ))}
         </SimpleGrid>
       </VStack>
     </Container>

@@ -36,7 +36,6 @@ const getYouTubeVideoId = (url: string): string => {
 
 export default function VideoSlider({ videos }: VideoSliderProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [slidesToShow, setSlidesToShow] = useState(1);
   const [isClient, setIsClient] = useState(false);
   
   // Debug logging
@@ -48,34 +47,21 @@ export default function VideoSlider({ videos }: VideoSliderProps) {
       console.log('[VideoSlider] Video URLs:', videos.map(v => v.videoUrl));
     }
   }, [videos]);
-  
-  useEffect(() => {
-    if (!isClient) return;
-    
-    const checkSlidesToShow = () => {
-      const width = window.innerWidth;
-      if (width >= 1024) setSlidesToShow(3); // lg
-      else if (width >= 768) setSlidesToShow(2); // md
-      else setSlidesToShow(1); // base
-    };
-    
-    checkSlidesToShow();
-    window.addEventListener('resize', checkSlidesToShow);
-    return () => window.removeEventListener('resize', checkSlidesToShow);
-  }, [isClient]);
 
   const nextSlide = () => {
-    setCurrentIndex((prev) => 
-      prev + slidesToShow >= videos.length ? 0 : prev + slidesToShow
-    );
+    setCurrentIndex((prev) => {
+      const slidesToShow = getSlidesToShow();
+      return prev + slidesToShow >= videos.length ? 0 : prev + slidesToShow;
+    });
   };
 
   const prevSlide = () => {
-    setCurrentIndex((prev) => 
-      prev - slidesToShow < 0 
+    setCurrentIndex((prev) => {
+      const slidesToShow = getSlidesToShow();
+      return prev - slidesToShow < 0 
         ? Math.max(0, videos.length - slidesToShow)
-        : prev - slidesToShow
-    );
+        : prev - slidesToShow;
+    });
   };
 
   const formatDuration = (seconds?: number) => {
@@ -83,6 +69,13 @@ export default function VideoSlider({ videos }: VideoSliderProps) {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  // Helper to get slidesToShow without causing hydration issues
+  const getSlidesToShow = () => {
+    if (typeof window === 'undefined') return 1; // SSR: default to 1
+    const width = window.innerWidth;
+    return width >= 1024 ? 3 : width >= 768 ? 2 : 1;
   };
 
 
@@ -105,14 +98,15 @@ export default function VideoSlider({ videos }: VideoSliderProps) {
           </Heading>
         </Box>
 
-        <Box position="relative">
+        <Box position="relative" suppressHydrationWarning>
           <HStack spacing={4} align="stretch" overflow="hidden">
             {videos
-              .slice(currentIndex, currentIndex + slidesToShow)
-              .map((video) => (
+              .slice(currentIndex, currentIndex + 3)
+              .map((video, idx) => (
                 <Box
                   key={video.id}
-                  flex="1"
+                  flex={{ base: idx === 0 ? "1" : "0", md: idx < 2 ? "1" : "0", lg: "1" }}
+                  display={{ base: idx === 0 ? "flex" : "none", md: idx < 2 ? "flex" : "none", lg: "flex" }}
                   minW="0"
                   bg="white"
                   borderRadius="lg"
@@ -287,18 +281,18 @@ export default function VideoSlider({ videos }: VideoSliderProps) {
           )}
         </Box>
 
-        {videos.length > 1 && (
-          <Flex justify="center" gap={2}>
-            {Array.from({ length: Math.ceil(videos.length / slidesToShow) }).map(
+        {videos.length > 1 && isClient && (
+          <Flex justify="center" gap={2} suppressHydrationWarning>
+            {Array.from({ length: Math.ceil(videos.length / getSlidesToShow()) }).map(
               (_, index) => (
                 <Box
                   key={index}
                   w={3}
                   h={3}
                   borderRadius="full"
-                  bg={index === Math.floor(currentIndex / slidesToShow) ? "blue.500" : "gray.300"}
+                  bg={index === Math.floor(currentIndex / getSlidesToShow()) ? "blue.500" : "gray.300"}
                   cursor="pointer"
-                  onClick={() => setCurrentIndex(index * slidesToShow)}
+                  onClick={() => setCurrentIndex(index * getSlidesToShow())}
                 />
               )
             )}

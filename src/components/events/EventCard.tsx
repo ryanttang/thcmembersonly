@@ -3,7 +3,6 @@ import { Box, Button, Heading, HStack, Stack, Text, Image as CImage, useToast, A
 import NextLink from "next/link";
 import { format } from "date-fns";
 import { useRef } from "react";
-import { useRouter } from "next/navigation";
 
 type Props = {
   id: string;
@@ -41,7 +40,6 @@ export default function EventCard({
   isAdminView = false // Default to public view
 }: Props) {
   const toast = useToast();
-  const router = useRouter();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const cancelRef = useRef<HTMLButtonElement>(null);
 
@@ -152,7 +150,8 @@ export default function EventCard({
       }
       
       // Refresh the page to update the event list
-      router.refresh();
+      // Use window.location.reload() instead of router.refresh() to avoid chunk loading errors
+      window.location.reload();
     } catch (error) {
       toast({
         title: "Error archiving event",
@@ -186,7 +185,8 @@ export default function EventCard({
       }
       
       // Refresh the page to update the event list
-      router.refresh();
+      // Use window.location.reload() instead of router.refresh() to avoid chunk loading errors
+      window.location.reload();
     } catch (error) {
       toast({
         title: "Error unarchiving event",

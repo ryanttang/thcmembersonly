@@ -132,7 +132,7 @@ export async function POST(req: NextRequest) {
   // Handle detail images - associate them with the event
   if (detailImageIds && detailImageIds.length > 0) {
     const imageIdsToAssociate = parsed.data.heroImageId 
-      ? detailImageIds.filter(id => id !== parsed.data.heroImageId) // Exclude hero image
+      ? detailImageIds.filter((id: string) => id !== parsed.data.heroImageId) // Exclude hero image
       : detailImageIds;
     if (imageIdsToAssociate.length > 0) {
       await prisma.image.updateMany({

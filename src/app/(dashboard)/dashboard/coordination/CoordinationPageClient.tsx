@@ -224,6 +224,7 @@ export default function CoordinationPageClient({
                   key={coordination.id} 
                   coordination={coordination}
                   events={events}
+                  onSuccess={handleRefresh}
                 />
               ))}
             </SimpleGrid>

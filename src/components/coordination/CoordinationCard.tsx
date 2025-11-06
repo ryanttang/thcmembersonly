@@ -66,11 +66,13 @@ interface CoordinationCardProps {
     };
   };
   events: Event[];
+  onSuccess?: () => void;
 }
 
-export default function CoordinationCard({ coordination, events }: CoordinationCardProps) {
+export default function CoordinationCard({ coordination, events, onSuccess }: CoordinationCardProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isArchiving, setIsArchiving] = useState(false);
+  const [isDuplicating, setIsDuplicating] = useState(false);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const { isOpen: isUploadOpen, onOpen: onUploadOpen, onClose: onUploadClose } = useDisclosure();
   const toast = useToast();
@@ -170,6 +172,66 @@ export default function CoordinationCard({ coordination, events }: CoordinationC
       });
     } finally {
       setIsArchiving(false);
+    }
+  };
+
+  const handleDuplicate = async () => {
+    if (!confirm("Are you sure you want to duplicate this coordination set? A new copy will be created with the same settings (documents will not be copied).")) {
+      return;
+    }
+
+    setIsDuplicating(true);
+    try {
+      // Create a duplicate with "Copy" suffix in the title
+      const duplicateData = {
+        eventId: coordination.eventId,
+        title: `${coordination.title} (Copy)`,
+        description: coordination.description || undefined,
+        notes: coordination.notes || undefined,
+        specialMessage: coordination.specialMessage || undefined,
+        location: coordination.location || undefined,
+        importantTimes: coordination.importantTimes || [],
+        staffParkingAddress: coordination.staffParkingAddress || undefined,
+        staffParkingNotes: coordination.staffParkingNotes || undefined,
+        pointOfContacts: coordination.pointOfContacts || [],
+      };
+
+      const response = await fetch("/api/coordination", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(duplicateData),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to duplicate coordination");
+      }
+
+      toast({
+        title: "Coordination duplicated",
+        description: "A new coordination set has been created successfully",
+        status: "success",
+        duration: 3000,
+      });
+
+      // Trigger parent component refresh
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        // Fallback to page reload if no callback provided
+        window.location.reload();
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "An error occurred",
+        status: "error",
+        duration: 5000,
+      });
+    } finally {
+      setIsDuplicating(false);
     }
   };
 
@@ -366,6 +428,17 @@ export default function CoordinationCard({ coordination, events }: CoordinationC
                 >
                   View
                 </Button>
+                <Tooltip label="Duplicate coordination set">
+                  <IconButton
+                    aria-label="Duplicate coordination set"
+                    icon={<span>📋</span>}
+                    size={{ base: "xs", md: "sm" }}
+                    variant="outline"
+                    colorScheme="purple"
+                    onClick={handleDuplicate}
+                    isLoading={isDuplicating}
+                  />
+                </Tooltip>
                 <Tooltip label={coordination.isArchived ? "Unarchive coordination" : "Archive coordination"}>
                   <IconButton
                     aria-label={coordination.isArchived ? "Unarchive coordination" : "Archive coordination"}

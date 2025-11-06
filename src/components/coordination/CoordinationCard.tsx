@@ -114,7 +114,12 @@ export default function CoordinationCard({ coordination, events, onSuccess }: Co
       });
 
       // Trigger parent component refresh
-      // No-op here; parent page handles refresh via callbacks
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        // Fallback to page reload if no callback provided
+        window.location.reload();
+      }
     } catch (error) {
       toast({
         title: "Error",
@@ -162,7 +167,12 @@ export default function CoordinationCard({ coordination, events, onSuccess }: Co
       });
 
       // Trigger parent component refresh
-      // No-op here; parent page handles refresh via callbacks
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        // Fallback to page reload if no callback provided
+        window.location.reload();
+      }
     } catch (error) {
       toast({
         title: "Error",

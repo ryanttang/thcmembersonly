@@ -99,6 +99,10 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       updateData.endAt = new Date(updateData.endAt);
     }
 
+    // Remove detailImageIds from updateData since it's not a field on the Event model
+    const detailImageIds = updateData.detailImageIds;
+    delete updateData.detailImageIds;
+
     await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       await tx.event.update({ where: { id: params.id }, data: updateData });
 
@@ -112,8 +116,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       }
 
       // Handle detail images - update which images are associated with this event
-      if (parsed.data.detailImageIds !== undefined) {
-        const detailImageIds = parsed.data.detailImageIds || [];
+      if (detailImageIds !== undefined) {
+        const imageIds = detailImageIds || [];
         const heroImageId = event.heroImageId;
         
         // First, remove all images from this event (except hero image)
@@ -126,10 +130,10 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
         });
         
         // Then, associate the specified images with this event (excluding hero image if present)
-        if (detailImageIds.length > 0) {
+        if (imageIds.length > 0) {
           const imageIdsToAssociate = heroImageId 
-            ? detailImageIds.filter(id => id !== heroImageId)
-            : detailImageIds;
+            ? imageIds.filter(id => id !== heroImageId)
+            : imageIds;
           
           if (imageIdsToAssociate.length > 0) {
             await tx.image.updateMany({

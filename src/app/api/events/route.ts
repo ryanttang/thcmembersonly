@@ -99,7 +99,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Convert datetime-local format to proper ISO format for Prisma
-  const eventData = {
+  const eventData: any = {
     ...parsed.data,
     slug,
     ownerId: owner.id,
@@ -107,6 +107,10 @@ export async function POST(req: NextRequest) {
     endAt: parsed.data.endAt ? new Date(parsed.data.endAt) : null,
     status: parsed.data.status || "DRAFT"
   };
+
+  // Remove detailImageIds from eventData since it's not a field on the Event model
+  const detailImageIds = eventData.detailImageIds;
+  delete eventData.detailImageIds;
 
   // Remove undefined values
   Object.keys(eventData).forEach(key => {
@@ -126,11 +130,13 @@ export async function POST(req: NextRequest) {
   }
 
   // Handle detail images - associate them with the event
-  if (parsed.data.detailImageIds && parsed.data.detailImageIds.length > 0) {
-    const detailImageIds = parsed.data.detailImageIds.filter(id => id !== parsed.data.heroImageId); // Exclude hero image
-    if (detailImageIds.length > 0) {
+  if (detailImageIds && detailImageIds.length > 0) {
+    const imageIdsToAssociate = parsed.data.heroImageId 
+      ? detailImageIds.filter(id => id !== parsed.data.heroImageId) // Exclude hero image
+      : detailImageIds;
+    if (imageIdsToAssociate.length > 0) {
       await prisma.image.updateMany({
-        where: { id: { in: detailImageIds } },
+        where: { id: { in: imageIdsToAssociate } },
         data: { eventId: event.id }
       });
     }

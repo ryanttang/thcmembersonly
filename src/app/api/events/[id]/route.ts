@@ -132,7 +132,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
         // Then, associate the specified images with this event (excluding hero image if present)
         if (imageIds.length > 0) {
           const imageIdsToAssociate = heroImageId 
-            ? imageIds.filter(id => id !== heroImageId)
+            ? imageIds.filter((id: string) => id !== heroImageId)
             : imageIds;
           
           if (imageIdsToAssociate.length > 0) {

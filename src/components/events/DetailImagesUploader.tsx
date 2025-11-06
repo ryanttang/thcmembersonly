@@ -60,6 +60,7 @@ export default function DetailImagesUploader({
         setUploadedImages(merged);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialImages]);
 
   const FILE_SIZE_LIMIT = 10 * 1024 * 1024; // 10MB limit

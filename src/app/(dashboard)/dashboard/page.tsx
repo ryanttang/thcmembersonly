@@ -16,11 +16,11 @@ export default async function DashboardPage() {
     // Admins and Organizers can see all events, others only see their own
     const canManageAllEvents = me.role === "ADMIN" || me.role === "ORGANIZER";
     
+    // Show all non-archived events for management (including DRAFT)
     const items = await prisma.event.findMany({ 
       where: { 
         ...(canManageAllEvents ? {} : { ownerId: me.id }),
-        status: "PUBLISHED"
-
+        status: { not: "ARCHIVED" }
       }, 
       include: { heroImage: true, owner: { select: { name: true, email: true } } }, 
       orderBy: { startAt: "desc" }

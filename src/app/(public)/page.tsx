@@ -59,8 +59,13 @@ export default async function HomePage() {
   
   try {
     // Fetch events with hero images directly from database
+    // Only show upcoming events (startAt >= now)
+    const now = new Date();
     const events = await prisma.event.findMany({
-      where: { status: 'PUBLISHED' },
+      where: { 
+        status: 'PUBLISHED',
+        startAt: { gte: now }
+      },
       include: { heroImage: true },
       orderBy: { startAt: 'asc' },
       take: 30,

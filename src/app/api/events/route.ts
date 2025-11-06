@@ -16,6 +16,7 @@ export async function GET(req: NextRequest) {
   const to = searchParams.get("to");
   const q = searchParams.get("q");
 
+  const now = new Date();
   const where: Prisma.EventWhereInput = { 
     status: status as "DRAFT" | "PUBLISHED" | "ARCHIVED" 
   };
@@ -33,11 +34,22 @@ export async function GET(req: NextRequest) {
     where.ownerId = user.id;
   }
   
+  // Handle date filtering: combine from/to params with past event filtering for PUBLISHED events
   if (from || to) {
     where.startAt = { 
       ...(from ? { gte: new Date(from) } : {}), 
       ...(to ? { lte: new Date(to) } : {}) 
     };
+    // For PUBLISHED events, also ensure we don't show past events even if from is in the past
+    if (status === "PUBLISHED" && (!from || new Date(from) < now)) {
+      where.startAt = {
+        ...where.startAt,
+        gte: from ? new Date(Math.max(new Date(from).getTime(), now.getTime())) : now
+      };
+    }
+  } else if (status === "PUBLISHED") {
+    // Filter out past events for PUBLISHED events (only show upcoming events)
+    where.startAt = { gte: now };
   }
   if (q) where.title = { contains: q, mode: "insensitive" };
 

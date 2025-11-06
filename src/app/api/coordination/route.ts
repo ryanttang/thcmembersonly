@@ -15,8 +15,10 @@ const createCoordinationSchema = z.object({
   notes: z.string().optional(),
   specialMessage: z.string().optional(),
   location: z.string().optional(),
-  loadInTimes: z.string().optional(),
-  loadOutTimes: z.string().optional(),
+  importantTimes: z.array(z.object({
+    type: z.string(),
+    datetime: z.string(),
+  })).optional(),
   staffParkingAddress: z.string().optional(),
   staffParkingNotes: z.string().optional(),
   pointOfContacts: z.array(z.object({
@@ -72,8 +74,7 @@ export async function GET(request: NextRequest) {
         notes: true,
         specialMessage: true,
         location: true,
-        loadInTimes: true,
-        loadOutTimes: true,
+        importantTimes: true,
         staffParkingAddress: true,
         staffParkingNotes: true,
         pointOfContacts: true,
@@ -126,7 +127,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { eventId, title, description, notes, specialMessage, location, loadInTimes, loadOutTimes, staffParkingAddress, staffParkingNotes, pointOfContacts } = createCoordinationSchema.parse(body);
+    const { eventId, title, description, notes, specialMessage, location, importantTimes, staffParkingAddress, staffParkingNotes, pointOfContacts } = createCoordinationSchema.parse(body);
 
     // Admins, Organizers, and Staff can create coordinations for any event
     const canManageAllEvents = ["ADMIN", "ORGANIZER", "STAFF"].includes(user.role as any);
@@ -182,8 +183,7 @@ export async function POST(request: NextRequest) {
         notes,
         specialMessage,
         location,
-        loadInTimes,
-        loadOutTimes,
+        importantTimes: importantTimes || [],
         staffParkingAddress,
         staffParkingNotes,
         pointOfContacts: pointOfContacts || [],

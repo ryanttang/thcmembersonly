@@ -436,7 +436,7 @@ export default function CoordinationPage({ params }: CoordinationPageProps) {
           {[
             { label: "Events", id: "section-events", show: true },
             { label: "Special Messages", id: "section-special-messages", show: !!coordination.specialMessage },
-            { label: "Load In/Out Times", id: "section-load-times", show: !!(coordination.loadInTimes || coordination.loadOutTimes) },
+            { label: "Important Times", id: "section-important-times", show: !!(coordination.importantTimes && Array.isArray(coordination.importantTimes) && coordination.importantTimes.length > 0) },
             { label: "Location", id: "section-location", show: !!coordination.location },
             { label: "Notes", id: "section-notes", show: !!coordination.notes },
             { label: "Staff Parking", id: "section-staff-parking", show: !!(coordination.staffParkingAddress || coordination.staffParkingNotes) },
@@ -557,8 +557,8 @@ export default function CoordinationPage({ params }: CoordinationPageProps) {
           </Card>
         )}
 
-        {/* Load In/Out Times and Location - Side by Side */}
-        {((coordination.loadInTimes || coordination.loadOutTimes) || coordination.location) && (
+        {/* Important Times and Location - Side by Side */}
+        {((coordination.importantTimes && Array.isArray(coordination.importantTimes) && coordination.importantTimes.length > 0) || coordination.location) && (
           <Grid 
             templateColumns={{ base: "1fr", md: "1fr 1fr" }} 
             gap={6}
@@ -646,36 +646,26 @@ export default function CoordinationPage({ params }: CoordinationPageProps) {
               </Card>
             )}
 
-            {/* Load In/Out Times */}
-            {(coordination.loadInTimes || coordination.loadOutTimes) && (
-              <Card id="section-load-times" shadow="md" borderRadius="xl">
+            {/* Important Times */}
+            {coordination.importantTimes && Array.isArray(coordination.importantTimes) && coordination.importantTimes.length > 0 && (
+              <Card id="section-important-times" shadow="md" borderRadius="xl">
                 <CardHeader>
                   <Heading size="md" color="gray.800" fontFamily="'SUSE Mono', monospace" fontWeight="600">
-                    ⏰ Load In/Out Times
+                    ⏰ Important Times
                   </Heading>
                 </CardHeader>
                 <CardBody pt={0}>
                   <VStack align="flex-start" spacing={4}>
-                    {coordination.loadInTimes && (
-                      <Box>
+                    {coordination.importantTimes.map((time: any, index: number) => (
+                      <Box key={index} w="100%">
                         <Text fontSize="sm" color="gray.600" fontWeight="medium" mb={2}>
-                          Load In Times:
+                          {time.type || "Time"}:
                         </Text>
                         <Text color="gray.700" fontWeight="500">
-                          {formatDateTime(coordination.loadInTimes)}
+                          {formatDateTime(time.datetime)}
                         </Text>
                       </Box>
-                    )}
-                    {coordination.loadOutTimes && (
-                      <Box>
-                        <Text fontSize="sm" color="gray.600" fontWeight="medium" mb={2}>
-                          Load Out Times:
-                        </Text>
-                        <Text color="gray.700" fontWeight="500">
-                          {formatDateTime(coordination.loadOutTimes)}
-                        </Text>
-                      </Box>
-                    )}
+                    ))}
                   </VStack>
                 </CardBody>
               </Card>

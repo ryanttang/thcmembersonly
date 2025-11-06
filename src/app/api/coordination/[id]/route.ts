@@ -18,8 +18,10 @@ const updateCoordinationSchema = z.object({
   notes: z.string().optional(),
   specialMessage: z.string().optional(),
   location: z.string().optional(),
-  loadInTimes: z.string().optional(),
-  loadOutTimes: z.string().optional(),
+  importantTimes: z.array(z.object({
+    type: z.string(),
+    datetime: z.string(),
+  })).optional(),
   staffParkingAddress: z.string().optional(),
   staffParkingNotes: z.string().optional(),
   pointOfContacts: z.array(z.object({

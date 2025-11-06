@@ -152,8 +152,7 @@ model Coordination {
   notes       String?
   specialMessage String?
   location    String? // Location/address for Google Maps link
-  loadInTimes String? // Load in times
-  loadOutTimes String? // Load out times
+  importantTimes Json? // Array of {type: string, datetime: string} objects (Load In Times, Load Out Times, Check In Times, Event Start, Event Ends)
   staffParkingAddress String? // Staff parking address
   staffParkingNotes String? // Staff parking directions and notes
   pointOfContacts Json? // Array of {name, number, email} objects

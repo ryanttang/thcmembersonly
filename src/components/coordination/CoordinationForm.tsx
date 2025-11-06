@@ -74,6 +74,38 @@ const parsePointOfContacts = (contacts: any): any[] => {
   return [];
 };
 
+// Helper function to safely parse importantTimes
+const parseImportantTimes = (times: any): any[] => {
+  if (!times) return [];
+  if (Array.isArray(times)) return times;
+  if (typeof times === 'string') {
+    try {
+      return JSON.parse(times);
+    } catch {
+      return [];
+    }
+  }
+  return [];
+};
+
+// Helper function to format datetime for input field (datetime-local format)
+const formatDateTimeForInput = (datetime: string | null | undefined): string => {
+  if (!datetime) return "";
+  try {
+    const date = new Date(datetime);
+    if (isNaN(date.getTime())) return "";
+    // Format as YYYY-MM-DDTHH:mm for datetime-local input
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  } catch {
+    return "";
+  }
+};
+
 // Google Maps helper functions
 const getGoogleMapsThumbnailUrl = (address: string): string | null => {
   if (!address || address.trim() === "") return null;
@@ -341,8 +373,10 @@ export default function CoordinationForm({
     notes: coordination?.notes || "",
     specialMessage: coordination?.specialMessage || "",
     location: coordination?.location || "",
-    loadInTimes: formatDateForInput(coordination?.loadInTimes),
-    loadOutTimes: formatDateForInput(coordination?.loadOutTimes),
+    importantTimes: parseImportantTimes(coordination?.importantTimes).map((time: any) => ({
+      type: time.type || "",
+      datetime: formatDateTimeForInput(time.datetime),
+    })),
     staffParkingAddress: coordination?.staffParkingAddress || "",
     staffParkingNotes: coordination?.staffParkingNotes || "",
     pointOfContacts: parsePointOfContacts(coordination?.pointOfContacts),
@@ -369,13 +403,14 @@ export default function CoordinationForm({
   useEffect(() => {
     if (coordination && coordination.id) {
       const parsedContacts = parsePointOfContacts(coordination.pointOfContacts);
+      const parsedTimes = parseImportantTimes(coordination.importantTimes);
       console.log('CoordinationForm: useEffect updating form data', {
         id: coordination.id,
         title: coordination.title,
         specialMessage: coordination.specialMessage,
         location: coordination.location,
-        loadInTimes: coordination.loadInTimes,
-        loadOutTimes: coordination.loadOutTimes,
+        importantTimes: coordination.importantTimes,
+        parsedTimes,
         staffParkingAddress: coordination.staffParkingAddress,
         staffParkingNotes: coordination.staffParkingNotes,
         pointOfContacts: coordination.pointOfContacts,
@@ -389,8 +424,10 @@ export default function CoordinationForm({
         notes: coordination.notes || "",
         specialMessage: coordination.specialMessage || "",
         location: coordination.location || "",
-        loadInTimes: formatDateForInput(coordination.loadInTimes),
-        loadOutTimes: formatDateForInput(coordination.loadOutTimes),
+        importantTimes: parsedTimes.map((time: any) => ({
+          type: time.type || "",
+          datetime: formatDateTimeForInput(time.datetime),
+        })),
         staffParkingAddress: coordination.staffParkingAddress || "",
         staffParkingNotes: coordination.staffParkingNotes || "",
         pointOfContacts: parsedContacts,
@@ -406,8 +443,7 @@ export default function CoordinationForm({
         notes: "",
         specialMessage: "",
         location: "",
-        loadInTimes: "",
-        loadOutTimes: "",
+        importantTimes: [],
         staffParkingAddress: "",
         staffParkingNotes: "",
         pointOfContacts: [],
@@ -427,11 +463,15 @@ export default function CoordinationForm({
       
       const method = coordination ? "PUT" : "POST";
 
-      // Filter out empty contacts before sending
+      // Filter out empty contacts and times before sending
       const submitData = {
         ...formData,
-        loadInTimes: parseDateTimeInput(formData.loadInTimes),
-        loadOutTimes: parseDateTimeInput(formData.loadOutTimes),
+        importantTimes: formData.importantTimes
+          .filter((time: any) => time.type && time.datetime)
+          .map((time: any) => ({
+            type: time.type,
+            datetime: parseDateTimeInput(time.datetime),
+          })),
         pointOfContacts: formData.pointOfContacts.filter((contact: any) => 
           (contact.name?.trim() || "") || (contact.number?.trim() || "") || (contact.email?.trim() || "")
         )
@@ -479,8 +519,7 @@ export default function CoordinationForm({
           notes: "",
           specialMessage: "",
           location: "",
-          loadInTimes: "",
-          loadOutTimes: "",
+          importantTimes: [],
           staffParkingAddress: "",
           staffParkingNotes: "",
           pointOfContacts: [],
@@ -521,6 +560,29 @@ export default function CoordinationForm({
       ...prev,
       pointOfContacts: prev.pointOfContacts.map((contact: any, i: number) => 
         i === index ? { ...contact, [field]: value } : contact
+      )
+    }));
+  };
+
+  const addImportantTime = () => {
+    setFormData(prev => ({
+      ...prev,
+      importantTimes: [...prev.importantTimes, { type: "", datetime: "" }]
+    }));
+  };
+
+  const removeImportantTime = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      importantTimes: prev.importantTimes.filter((_: any, i: number) => i !== index)
+    }));
+  };
+
+  const updateImportantTime = (index: number, field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      importantTimes: prev.importantTimes.map((time: any, i: number) => 
+        i === index ? { ...time, [field]: value } : time
       )
     }));
   };
@@ -810,24 +872,57 @@ export default function CoordinationForm({
                     )}
                   </FormControl>
 
+                  {/* Important Times */}
                   <FormControl>
-                    <FormLabel>Load In Times</FormLabel>
-                    <Input
-                      type="datetime-local"
-                      value={formData.loadInTimes}
-                      onChange={(e) => handleInputChange("loadInTimes", e.target.value)}
-                      fontSize="0.95em"
-                    />
-                  </FormControl>
-
-                  <FormControl>
-                    <FormLabel>Load Out Times</FormLabel>
-                    <Input
-                      type="datetime-local"
-                      value={formData.loadOutTimes}
-                      onChange={(e) => handleInputChange("loadOutTimes", e.target.value)}
-                      fontSize="0.95em"
-                    />
+                    <FormLabel>Important Times</FormLabel>
+                    <VStack spacing={3} align="stretch">
+                      {formData.importantTimes.map((time: any, index: number) => (
+                        <Box key={index} p={4} border="1px solid" borderColor="gray.200" borderRadius="md">
+                          <HStack justify="space-between" align="center" mb={3}>
+                            <Text fontSize="sm" fontWeight="medium" color="gray.700">
+                              Time {index + 1}
+                            </Text>
+                            <Button
+                              size="xs"
+                              variant="ghost"
+                              colorScheme="red"
+                              onClick={() => removeImportantTime(index)}
+                            >
+                              Remove
+                            </Button>
+                          </HStack>
+                          <VStack spacing={3}>
+                            <Select
+                              value={time.type}
+                              onChange={(e) => updateImportantTime(index, "type", e.target.value)}
+                              placeholder="Select time type"
+                              fontSize="0.95em"
+                            >
+                              <option value="Load In Times">Load In Times</option>
+                              <option value="Load Out Times">Load Out Times</option>
+                              <option value="Check In Times">Check In Times</option>
+                              <option value="Event Start">Event Start</option>
+                              <option value="Event Ends">Event Ends</option>
+                            </Select>
+                            <Input
+                              type="datetime-local"
+                              value={time.datetime}
+                              onChange={(e) => updateImportantTime(index, "datetime", e.target.value)}
+                              placeholder="Select date and time"
+                              fontSize="0.95em"
+                            />
+                          </VStack>
+                        </Box>
+                      ))}
+                      <Button
+                        variant="outline"
+                        colorScheme="blue"
+                        onClick={addImportantTime}
+                        leftIcon={<span>+</span>}
+                      >
+                        Add Important Time
+                      </Button>
+                    </VStack>
                   </FormControl>
 
                   <FormControl>
@@ -1126,24 +1221,57 @@ export default function CoordinationForm({
                     )}
                   </FormControl>
 
+                  {/* Important Times */}
                   <FormControl>
-                    <FormLabel>Load In Times</FormLabel>
-                    <Input
-                      type="datetime-local"
-                      value={formData.loadInTimes}
-                      onChange={(e) => handleInputChange("loadInTimes", e.target.value)}
-                      fontSize="0.95em"
-                    />
-                  </FormControl>
-
-                  <FormControl>
-                    <FormLabel>Load Out Times</FormLabel>
-                    <Input
-                      type="datetime-local"
-                      value={formData.loadOutTimes}
-                      onChange={(e) => handleInputChange("loadOutTimes", e.target.value)}
-                      fontSize="0.95em"
-                    />
+                    <FormLabel>Important Times</FormLabel>
+                    <VStack spacing={3} align="stretch">
+                      {formData.importantTimes.map((time: any, index: number) => (
+                        <Box key={index} p={4} border="1px solid" borderColor="gray.200" borderRadius="md">
+                          <HStack justify="space-between" align="center" mb={3}>
+                            <Text fontSize="sm" fontWeight="medium" color="gray.700">
+                              Time {index + 1}
+                            </Text>
+                            <Button
+                              size="xs"
+                              variant="ghost"
+                              colorScheme="red"
+                              onClick={() => removeImportantTime(index)}
+                            >
+                              Remove
+                            </Button>
+                          </HStack>
+                          <VStack spacing={3}>
+                            <Select
+                              value={time.type}
+                              onChange={(e) => updateImportantTime(index, "type", e.target.value)}
+                              placeholder="Select time type"
+                              fontSize="0.95em"
+                            >
+                              <option value="Load In Times">Load In Times</option>
+                              <option value="Load Out Times">Load Out Times</option>
+                              <option value="Check In Times">Check In Times</option>
+                              <option value="Event Start">Event Start</option>
+                              <option value="Event Ends">Event Ends</option>
+                            </Select>
+                            <Input
+                              type="datetime-local"
+                              value={time.datetime}
+                              onChange={(e) => updateImportantTime(index, "datetime", e.target.value)}
+                              placeholder="Select date and time"
+                              fontSize="0.95em"
+                            />
+                          </VStack>
+                        </Box>
+                      ))}
+                      <Button
+                        variant="outline"
+                        colorScheme="blue"
+                        onClick={addImportantTime}
+                        leftIcon={<span>+</span>}
+                      >
+                        Add Important Time
+                      </Button>
+                    </VStack>
                   </FormControl>
 
                   <FormControl>

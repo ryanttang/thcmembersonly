@@ -16,6 +16,7 @@ export const createEventSchema = z.object({
   timezone: z.string(),
   status: z.enum(["DRAFT","PUBLISHED","ARCHIVED"]),
   heroImageId: z.string().optional().or(z.literal("")),
+  detailImageIds: z.array(z.string()).optional(),
   slug: z.string().optional()
 });
 

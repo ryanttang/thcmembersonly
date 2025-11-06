@@ -30,15 +30,22 @@ export default function DetailImagesUploader({
   const toast = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
+  const isInitialMount = useRef(true);
 
   // Update parent when images change
   useEffect(() => {
     onImagesUploaded(uploadedImages);
   }, [uploadedImages, onImagesUploaded]);
 
-  // Sync uploadedImages when initialImages prop changes
+  // Sync uploadedImages when initialImages prop changes (only on mount or when initialImages length increases)
   useEffect(() => {
-    if (initialImages && initialImages.length > 0) {
+    if (isInitialMount.current) {
+      // On initial mount, sync with initialImages
+      setUploadedImages(initialImages);
+      isInitialMount.current = false;
+    } else if (initialImages.length > uploadedImages.length) {
+      // If initialImages has more items than uploadedImages, it means new images were added externally
+      // Only sync if the count increased (new images added), not if it decreased (user deleted)
       setUploadedImages(initialImages);
     }
   }, [initialImages]);

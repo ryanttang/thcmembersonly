@@ -70,7 +70,11 @@ export default function EventForm({ initial, mode = "create", eventId, existingI
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...vals, heroImageId })
+        body: JSON.stringify({ 
+          ...vals, 
+          heroImageId,
+          detailImageIds: detailImages.map(img => img.id)
+        })
       });
       
       const json = await res.json();

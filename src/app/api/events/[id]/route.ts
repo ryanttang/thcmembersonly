@@ -110,6 +110,35 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
           await tx.event.update({ where: { id: params.id }, data: { heroImageId: null } });
         }
       }
+
+      // Handle detail images - update which images are associated with this event
+      if (parsed.data.detailImageIds !== undefined) {
+        const detailImageIds = parsed.data.detailImageIds || [];
+        const heroImageId = event.heroImageId;
+        
+        // First, remove all images from this event (except hero image)
+        await tx.image.updateMany({
+          where: { 
+            eventId: params.id,
+            ...(heroImageId ? { id: { not: heroImageId } } : {})
+          },
+          data: { eventId: null }
+        });
+        
+        // Then, associate the specified images with this event (excluding hero image if present)
+        if (detailImageIds.length > 0) {
+          const imageIdsToAssociate = heroImageId 
+            ? detailImageIds.filter(id => id !== heroImageId)
+            : detailImageIds;
+          
+          if (imageIdsToAssociate.length > 0) {
+            await tx.image.updateMany({
+              where: { id: { in: imageIdsToAssociate } },
+              data: { eventId: params.id }
+            });
+          }
+        }
+      }
     });
     
     // Return the updated event with hero image included

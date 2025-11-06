@@ -125,5 +125,16 @@ export async function POST(req: NextRequest) {
     await prisma.event.update({ where: { id: event.id }, data: { heroImageId: parsed.data.heroImageId }});
   }
 
+  // Handle detail images - associate them with the event
+  if (parsed.data.detailImageIds && parsed.data.detailImageIds.length > 0) {
+    const detailImageIds = parsed.data.detailImageIds.filter(id => id !== parsed.data.heroImageId); // Exclude hero image
+    if (detailImageIds.length > 0) {
+      await prisma.image.updateMany({
+        where: { id: { in: detailImageIds } },
+        data: { eventId: event.id }
+      });
+    }
+  }
+
   return NextResponse.json(event, { status: 201 });
 }

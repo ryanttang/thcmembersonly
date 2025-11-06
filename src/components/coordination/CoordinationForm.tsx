@@ -901,6 +901,7 @@ export default function CoordinationForm({
                               <option value="Load In Times">Load In Times</option>
                               <option value="Load Out Times">Load Out Times</option>
                               <option value="Check In Times">Check In Times</option>
+                              <option value="Doors Open">Doors Open</option>
                               <option value="Event Start">Event Start</option>
                               <option value="Event Ends">Event Ends</option>
                             </Select>
@@ -1250,6 +1251,7 @@ export default function CoordinationForm({
                               <option value="Load In Times">Load In Times</option>
                               <option value="Load Out Times">Load Out Times</option>
                               <option value="Check In Times">Check In Times</option>
+                              <option value="Doors Open">Doors Open</option>
                               <option value="Event Start">Event Start</option>
                               <option value="Event Ends">Event Ends</option>
                             </Select>

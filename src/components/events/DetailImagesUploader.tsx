@@ -13,7 +13,6 @@ import {
   Badge,
   Image as ChakraImage
 } from "@chakra-ui/react";
-import Image from "next/image";
 
 export default function DetailImagesUploader({ 
   eventId, 
@@ -36,6 +35,13 @@ export default function DetailImagesUploader({
   useEffect(() => {
     onImagesUploaded(uploadedImages);
   }, [uploadedImages, onImagesUploaded]);
+
+  // Sync uploadedImages when initialImages prop changes
+  useEffect(() => {
+    if (initialImages && initialImages.length > 0) {
+      setUploadedImages(initialImages);
+    }
+  }, [initialImages]);
 
   const FILE_SIZE_LIMIT = 10 * 1024 * 1024; // 10MB limit
 
@@ -382,13 +388,14 @@ export default function DetailImagesUploader({
           <SimpleGrid columns={3} spacing={3}>
             {uploadedImages.map((img) => (
               <Box key={img.id} p={2} bg="gray.50" borderRadius="md" position="relative">
-                <Box w="full" h="24" borderRadius="md" overflow="hidden" mb={2}>
-                  <Image 
+                <Box w="full" h="24" borderRadius="md" overflow="hidden" mb={2} bg="gray.200">
+                  <ChakraImage 
                     src={getImageUrl(img)} 
                     alt={img.fileName || "Detail image"}
-                    width={100}
-                    height={96}
-                    style={{ objectFit: 'cover' }}
+                    w="100%"
+                    h="100%"
+                    objectFit="cover"
+                    fallbackSrc="/placeholder-image.svg"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
                       target.src = "/placeholder-image.svg";

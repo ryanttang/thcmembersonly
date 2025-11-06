@@ -37,16 +37,28 @@ export default function DetailImagesUploader({
     onImagesUploaded(uploadedImages);
   }, [uploadedImages, onImagesUploaded]);
 
-  // Sync uploadedImages when initialImages prop changes (only on mount or when initialImages length increases)
+  // Sync uploadedImages when initialImages prop changes (only on mount or when new images are added externally)
   useEffect(() => {
     if (isInitialMount.current) {
       // On initial mount, sync with initialImages
       setUploadedImages(initialImages);
       isInitialMount.current = false;
-    } else if (initialImages.length > uploadedImages.length) {
-      // If initialImages has more items than uploadedImages, it means new images were added externally
-      // Only sync if the count increased (new images added), not if it decreased (user deleted)
-      setUploadedImages(initialImages);
+    } else {
+      // After initial mount, only sync if initialImages has new images that aren't in uploadedImages
+      const currentIds = new Set(uploadedImages.map(img => img.id));
+      const initialIds = new Set(initialImages.map(img => img.id));
+      const hasNewImages = initialImages.some(img => !currentIds.has(img.id));
+      
+      if (hasNewImages) {
+        // Merge current images with new images from initialImages
+        const merged = [...uploadedImages];
+        initialImages.forEach(img => {
+          if (!currentIds.has(img.id)) {
+            merged.push(img);
+          }
+        });
+        setUploadedImages(merged);
+      }
     }
   }, [initialImages]);
 

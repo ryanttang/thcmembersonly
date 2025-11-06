@@ -89,7 +89,7 @@ export default function DashboardNav() {
         variant={isActive ? "solid" : "outline"}
         bg={isActive ? "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)" : "rgba(255, 255, 255, 0.8)"}
         color={isActive ? "white" : "gray.700"}
-        borderWidth={isActive ? "0px" : "2px"}
+        borderWidth={isActive ? "0px" : "1px"}
         backdropFilter={isActive ? "none" : "blur(8px)"}
         leftIcon={<Text fontSize="sm">{item.icon}</Text>}
         px={isCompact ? 3 : 2}

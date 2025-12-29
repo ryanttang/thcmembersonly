@@ -2,7 +2,9 @@
 const nextConfig = {
   experimental: { 
     serverActions: { bodySizeLimit: '10mb' },
-    // Increase body size limit for API routes
+    // Note: API routes handle body size limits differently
+    // Video uploads (up to 200MB) use FormData and are handled by the API route
+    // For very large files, consider implementing direct S3 uploads with presigned URLs
     ...(process.env.NODE_ENV === 'production' && {
       // Production-specific configuration
     }),

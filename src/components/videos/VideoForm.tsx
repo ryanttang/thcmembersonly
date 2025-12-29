@@ -22,9 +22,41 @@ import {
   Box,
   useToast,
   Spinner,
+  Progress,
+  Alert,
+  AlertIcon,
 } from "@chakra-ui/react";
-import { uploadFile } from "@/lib/s3";
 import type { RecentEventVideo } from "@/types";
+
+// Upload configuration constants
+const MAX_VIDEO_SIZE = 200 * 1024 * 1024; // 200MB
+const MAX_THUMBNAIL_SIZE = 10 * 1024 * 1024; // 10MB
+
+// Allowed video MIME types
+const ALLOWED_VIDEO_TYPES = [
+  "video/mp4",
+  "video/webm",
+  "video/quicktime", // MOV
+  "video/x-msvideo", // AVI
+  "video/x-matroska", // MKV
+];
+
+// Allowed image MIME types
+const ALLOWED_IMAGE_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+];
+
+// Helper function to format file size
+const formatFileSize = (bytes: number): string => {
+  if (bytes === 0) return "0 Bytes";
+  const k = 1024;
+  const sizes = ["Bytes", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return Math.round(bytes / Math.pow(k, i) * 100) / 100 + " " + sizes[i];
+};
 
 interface VideoFormProps {
   isOpen: boolean;
@@ -49,6 +81,10 @@ export default function VideoForm({ isOpen, onClose, onSubmit, video }: VideoFor
   });
   const [uploading, setUploading] = useState(false);
   const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [thumbnailProgress, setThumbnailProgress] = useState(0);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [thumbnailError, setThumbnailError] = useState<string | null>(null);
   const toast = useToast();
 
   useEffect(() => {
@@ -87,36 +123,134 @@ export default function VideoForm({ isOpen, onClose, onSubmit, video }: VideoFor
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  // Client-side validation
+  const validateFile = (file: File, type: "video" | "thumbnail"): string | null => {
+    const maxSize = type === "video" ? MAX_VIDEO_SIZE : MAX_THUMBNAIL_SIZE;
+    const allowedTypes = type === "video" ? ALLOWED_VIDEO_TYPES : ALLOWED_IMAGE_TYPES;
+    const maxSizeMB = type === "video" ? "200MB" : "10MB";
+
+    // Check file size
+    if (file.size > maxSize) {
+      return `File size (${formatFileSize(file.size)}) exceeds maximum allowed size of ${maxSizeMB}`;
+    }
+
+    // Check MIME type
+    if (!allowedTypes.includes(file.type)) {
+      return `File type "${file.type}" is not supported. Allowed types: ${allowedTypes.join(", ")}`;
+    }
+
+    return null;
+  };
+
   const handleFileUpload = async (file: File, type: "video" | "thumbnail") => {
     const setUploadingState = type === "video" ? setUploading : setUploadingThumbnail;
+    const setProgress = type === "video" ? setUploadProgress : setThumbnailProgress;
+    const setError = type === "video" ? setUploadError : setThumbnailError;
+    
+    // Clear previous errors
+    setError(null);
+    setProgress(0);
+
+    // Client-side validation
+    const validationError = validateFile(file, type);
+    if (validationError) {
+      setError(validationError);
+      toast({
+        title: "Validation Error",
+        description: validationError,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+      return;
+    }
     
     try {
       setUploadingState(true);
-      const url = await uploadFile(file, `videos/${type}s/`);
+      setProgress(10); // Start progress
+
+      // Create form data
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("fileType", type);
+
+      setProgress(30);
+
+      // Upload to new endpoint
+      const response = await fetch("/api/upload/video", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+
+      setProgress(70);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: "Upload failed" }));
+        
+        let errorMessage = errorData.message || errorData.error || "Upload failed";
+        
+        // Handle specific error cases
+        if (response.status === 413) {
+          errorMessage = `File too large: ${errorData.message || "Maximum size exceeded"}`;
+        } else if (response.status === 429) {
+          const retryAfter = response.headers.get("Retry-After");
+          const retryMinutes = retryAfter ? Math.ceil(parseInt(retryAfter) / 60) : 15;
+          errorMessage = `Rate limit exceeded. Please try again in ${retryMinutes} minute${retryMinutes !== 1 ? "s" : ""}.`;
+        } else if (response.status === 400) {
+          errorMessage = errorData.message || "Invalid file type or format";
+        } else if (response.status === 401 || response.status === 403) {
+          errorMessage = "You don't have permission to upload files";
+        }
+
+        setError(errorMessage);
+        toast({
+          title: "Upload Failed",
+          description: errorMessage,
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+        });
+        return;
+      }
+
+      setProgress(90);
+
+      const result = await response.json();
       
       if (type === "video") {
-        handleInputChange("videoUrl", url);
+        handleInputChange("videoUrl", result.url);
         handleInputChange("videoType", "UPLOADED");
       } else {
-        handleInputChange("thumbnailUrl", url);
+        handleInputChange("thumbnailUrl", result.url);
       }
-      
+
+      setProgress(100);
+
       toast({
         title: "Success",
-        description: `${type} uploaded successfully`,
+        description: `${type === "video" ? "Video" : "Thumbnail"} uploaded successfully`,
         status: "success",
         duration: 3000,
         isClosable: true,
       });
+
+      // Reset progress after a short delay
+      setTimeout(() => {
+        setProgress(0);
+      }, 1000);
     } catch (error) {
       console.error(`Error uploading ${type}:`, error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to upload file";
+      setError(errorMessage);
       toast({
         title: "Error",
-        description: `Failed to upload ${type}`,
+        description: errorMessage,
         status: "error",
-        duration: 3000,
+        duration: 5000,
         isClosable: true,
       });
+      setProgress(0);
     } finally {
       setUploadingState(false);
     }
@@ -204,7 +338,7 @@ export default function VideoForm({ isOpen, onClose, onSubmit, video }: VideoFor
                   <FormLabel>Video File</FormLabel>
                   <Input
                     type="file"
-                    accept="video/*"
+                    accept={ALLOWED_VIDEO_TYPES.join(",")}
                     onChange={(e) => {
                       const file = e.target.files?.[0];
                       if (file) {
@@ -213,16 +347,28 @@ export default function VideoForm({ isOpen, onClose, onSubmit, video }: VideoFor
                     }}
                     disabled={uploading}
                   />
-                  {uploading && (
-                    <HStack mt={2}>
-                      <Spinner size="sm" />
-                      <Text fontSize="sm" color="gray.500">
-                        Uploading video...
-                      </Text>
-                    </HStack>
+                  <Text fontSize="xs" color="gray.500" mt={1}>
+                    Maximum file size: 200MB. Supported formats: MP4, WebM, MOV, AVI, MKV
+                  </Text>
+                  {uploadError && (
+                    <Alert status="error" mt={2} borderRadius="md">
+                      <AlertIcon />
+                      {uploadError}
+                    </Alert>
                   )}
-                  {formData.videoUrl && (
-                    <Text fontSize="sm" color="green.500" mt={1}>
+                  {uploading && (
+                    <Box mt={2}>
+                      <HStack mb={2}>
+                        <Spinner size="sm" />
+                        <Text fontSize="sm" color="gray.500">
+                          Uploading video... {uploadProgress > 0 && `${uploadProgress}%`}
+                        </Text>
+                      </HStack>
+                      <Progress value={uploadProgress} colorScheme="blue" size="sm" borderRadius="md" />
+                    </Box>
+                  )}
+                  {formData.videoUrl && !uploading && (
+                    <Text fontSize="sm" color="green.500" mt={2}>
                       ✓ Video uploaded: {formData.videoUrl.split('/').pop()}
                     </Text>
                   )}
@@ -233,7 +379,7 @@ export default function VideoForm({ isOpen, onClose, onSubmit, video }: VideoFor
                 <FormLabel>Thumbnail Image (Optional)</FormLabel>
                 <Input
                   type="file"
-                  accept="image/*"
+                  accept={ALLOWED_IMAGE_TYPES.join(",")}
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file) {
@@ -242,16 +388,28 @@ export default function VideoForm({ isOpen, onClose, onSubmit, video }: VideoFor
                   }}
                   disabled={uploadingThumbnail}
                 />
-                {uploadingThumbnail && (
-                  <HStack mt={2}>
-                    <Spinner size="sm" />
-                    <Text fontSize="sm" color="gray.500">
-                      Uploading thumbnail...
-                    </Text>
-                  </HStack>
+                <Text fontSize="xs" color="gray.500" mt={1}>
+                  Maximum file size: 10MB. Supported formats: JPEG, PNG, WebP, GIF
+                </Text>
+                {thumbnailError && (
+                  <Alert status="error" mt={2} borderRadius="md">
+                    <AlertIcon />
+                    {thumbnailError}
+                  </Alert>
                 )}
-                {formData.thumbnailUrl && (
-                  <Text fontSize="sm" color="green.500" mt={1}>
+                {uploadingThumbnail && (
+                  <Box mt={2}>
+                    <HStack mb={2}>
+                      <Spinner size="sm" />
+                      <Text fontSize="sm" color="gray.500">
+                        Uploading thumbnail... {thumbnailProgress > 0 && `${thumbnailProgress}%`}
+                      </Text>
+                    </HStack>
+                    <Progress value={thumbnailProgress} colorScheme="blue" size="sm" borderRadius="md" />
+                  </Box>
+                )}
+                {formData.thumbnailUrl && !uploadingThumbnail && (
+                  <Text fontSize="sm" color="green.500" mt={2}>
                     ✓ Thumbnail uploaded: {formData.thumbnailUrl.split('/').pop()}
                   </Text>
                 )}

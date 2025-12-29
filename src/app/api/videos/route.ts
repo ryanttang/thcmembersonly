@@ -54,8 +54,8 @@ export async function POST(req: NextRequest) {
     where: { email: session.user.email } 
   });
 
-  if (!user || user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!user) {
+    return NextResponse.json({ error: "User not found" }, { status: 401 });
   }
 
   try {

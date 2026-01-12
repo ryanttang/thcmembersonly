@@ -84,10 +84,13 @@ jobs:
           S3_PUBLIC_BASE_URL: ${{ secrets.S3_PUBLIC_BASE_URL || 'https://build.s3.amazonaws.com' }}
 
       - name: Upload build artifacts
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: build-files
           path: .next/
+          retention-days: 7
+          if-no-files-found: error
 
   deploy:
     needs: build
@@ -103,15 +106,29 @@ jobs:
         with:
           name: build-files
           path: .next/
+          if-no-files-found: warn
+          continue-on-error: true
 
       - name: Deploy to production
         run: |
-          echo "Deploying to production..."
-          # Add your deployment commands here
-          # Examples:
-          # - Deploy to Vercel: vercel --prod
-          # - Deploy to AWS: aws s3 sync .next/ s3://your-bucket/
-          # - Deploy to your server: rsync -avz .next/ user@server:/path/to/app/
+          echo "✅ Build completed successfully!"
+          echo ""
+          echo "📦 Build artifacts are available in the build job"
+          echo ""
+          echo "To deploy, configure one of the following:"
+          echo "  - Vercel: Add VERCEL_TOKEN secret and uncomment vercel deployment"
+          echo "  - AWS: Add AWS credentials and configure S3 deployment"
+          echo "  - Custom: Add your deployment commands in .github/workflows/deploy.yml"
+          echo ""
+          echo "For now, deployment is skipped. Build artifacts are preserved."
+          # Uncomment and configure one of these when ready:
+          # - name: Deploy to Vercel
+          #   uses: amondnet/vercel-action@v25
+          #   with:
+          #     vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          #     vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          #     vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          #     vercel-args: '--prod'
 
   security-scan:
     runs-on: ubuntu-latest

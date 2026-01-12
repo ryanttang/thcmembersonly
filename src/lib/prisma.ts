@@ -16,17 +16,36 @@ const createPrismaClient = () => {
   
   if (isBuildTime) {
     // Return a mock client for build time
+    const mockFindMany = () => Promise.resolve([]);
+    const mockFindFirst = () => Promise.resolve(null);
+    const mockFindUnique = () => Promise.resolve(null);
+    const mockCount = () => Promise.resolve(0);
+    const mockUpdateMany = () => Promise.resolve({ count: 0 });
+    const mockCreate = () => Promise.resolve({} as any);
+    const mockUpdate = () => Promise.resolve({} as any);
+    const mockDelete = () => Promise.resolve({} as any);
+    
     return {
-      user: { count: () => Promise.resolve(0) },
+      user: { count: mockCount },
       event: {
-        findMany: () => Promise.resolve([]),
-        findFirst: () => Promise.resolve(null),
-        findUnique: () => Promise.resolve(null),
-        count: () => Promise.resolve(0),
-        updateMany: () => Promise.resolve({ count: 0 }),
-        create: () => Promise.resolve({} as any),
-        update: () => Promise.resolve({} as any),
-        delete: () => Promise.resolve({} as any),
+        findMany: mockFindMany,
+        findFirst: mockFindFirst,
+        findUnique: mockFindUnique,
+        count: mockCount,
+        updateMany: mockUpdateMany,
+        create: mockCreate,
+        update: mockUpdate,
+        delete: mockDelete,
+      },
+      gallery: {
+        findMany: mockFindMany,
+        findFirst: mockFindFirst,
+        findUnique: mockFindUnique,
+        count: mockCount,
+        updateMany: mockUpdateMany,
+        create: mockCreate,
+        update: mockUpdate,
+        delete: mockDelete,
       },
       $executeRaw: () => Promise.resolve(),
       $disconnect: () => Promise.resolve(),

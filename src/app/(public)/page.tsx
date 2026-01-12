@@ -9,6 +9,7 @@ import { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { prisma } from "@/lib/prisma";
+import { autoArchivePastEvents } from "@/lib/utils";
 import type { RecentEventVideo } from "@prisma/client";
 
 export const metadata: Metadata = {
@@ -58,6 +59,9 @@ export default async function HomePage() {
   let galleryData = { allImages: [] };
   
   try {
+    // Auto-archive past PUBLISHED events before fetching
+    await autoArchivePastEvents();
+    
     // Fetch events with hero images directly from database
     // Only show upcoming events (startAt >= now)
     const now = new Date();

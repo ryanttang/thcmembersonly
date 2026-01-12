@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerAuthSession } from "@/lib/auth";
 import { createEventSchema } from "@/lib/validation";
-import { createSlug } from "@/lib/utils";
+import { createSlug, autoArchivePastEvents } from "@/lib/utils";
 import type { Prisma } from "@prisma/client";
 
 export async function GET(req: NextRequest) {
@@ -15,6 +15,9 @@ export async function GET(req: NextRequest) {
   const from = searchParams.get("from"); // ISO
   const to = searchParams.get("to");
   const q = searchParams.get("q");
+
+  // Auto-archive past PUBLISHED events before fetching
+  await autoArchivePastEvents();
 
   const now = new Date();
   const where: Prisma.EventWhereInput = { 

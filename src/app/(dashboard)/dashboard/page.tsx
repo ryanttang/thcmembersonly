@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getServerAuthSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import EventGrid from "@/components/events/EventGrid";
+import { autoArchivePastEvents } from "@/lib/utils";
 import { Button, HStack, Heading, Box, Text, VStack, SimpleGrid, Card, CardBody, CardHeader, Container, Badge } from "@chakra-ui/react";
 import Link from "next/link";
 
@@ -16,11 +17,20 @@ export default async function DashboardPage() {
     // Admins and Organizers can see all events, others only see their own
     const canManageAllEvents = me.role === "ADMIN" || me.role === "ORGANIZER";
     
-    // Show all non-archived events for management (including DRAFT)
+    // Auto-archive past PUBLISHED events before fetching
+    await autoArchivePastEvents();
+    
+    // Show current and upcoming non-archived events for management
+    // DRAFT events are shown regardless of date, PUBLISHED events must be upcoming
+    const now = new Date();
     const items = await prisma.event.findMany({ 
       where: { 
         ...(canManageAllEvents ? {} : { ownerId: me.id }),
-        status: { not: "ARCHIVED" }
+        status: { not: "ARCHIVED" },
+        OR: [
+          { status: "DRAFT" }, // Show all drafts regardless of date
+          { status: "PUBLISHED", startAt: { gte: now } } // Only show upcoming published events
+        ]
       }, 
       include: { heroImage: true, owner: { select: { name: true, email: true } } }, 
       orderBy: { startAt: "desc" }

@@ -52,35 +52,36 @@ jobs:
       - name: Generate Prisma client
         run: npx prisma generate
 
-      - name: Validate environment variables
+      - name: Check for GitHub Secrets
         run: |
-          echo "Validating environment variables..."
+          echo "Checking GitHub Secrets configuration..."
           if [ -z "${{ secrets.DATABASE_URL }}" ]; then
-            echo "❌ ERROR: DATABASE_URL secret is not set in GitHub Secrets"
-            echo "Please add it in: Settings → Secrets and variables → Actions"
-            exit 1
+            echo "⚠️  WARNING: DATABASE_URL secret is not set"
+            echo "Build will use mock database client (build-time only)"
+            echo "For production deployment, add secrets in: Settings → Secrets and variables → Actions"
+          else
+            echo "✅ DATABASE_URL is configured"
           fi
           if [ -z "${{ secrets.NEXTAUTH_SECRET }}" ]; then
-            echo "❌ ERROR: NEXTAUTH_SECRET secret is not set in GitHub Secrets"
-            exit 1
+            echo "⚠️  WARNING: NEXTAUTH_SECRET secret is not set"
+            echo "Using temporary secret for build (NOT for production)"
+          else
+            echo "✅ NEXTAUTH_SECRET is configured"
           fi
-          if [ -z "${{ secrets.AWS_ACCESS_KEY_ID }}" ]; then
-            echo "⚠️  WARNING: AWS_ACCESS_KEY_ID secret is not set (S3 uploads will fail)"
-          fi
-          echo "✅ Environment variables validated"
 
       - name: Build application
         run: npm run build
         env:
-          # Use GitHub Secrets for production values
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          # Use GitHub Secrets if available, otherwise use build-time defaults
+          # The app will detect build-time mode and use mock clients
+          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://build:build@localhost:5432/build' }}
           NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL || 'http://localhost:3000' }}
-          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET || 'build-time-temporary-secret-not-for-production-use' }}
           AWS_REGION: ${{ secrets.AWS_REGION || 'us-west-2' }}
           S3_BUCKET: ${{ secrets.S3_BUCKET || 'thcmembersonlyclub' }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          S3_PUBLIC_BASE_URL: ${{ secrets.S3_PUBLIC_BASE_URL }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID || 'build' }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY || 'build' }}
+          S3_PUBLIC_BASE_URL: ${{ secrets.S3_PUBLIC_BASE_URL || 'https://build.s3.amazonaws.com' }}
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4

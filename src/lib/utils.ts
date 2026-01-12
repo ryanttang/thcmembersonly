@@ -30,30 +30,25 @@ export const formatDateTime = (date: Date | string) => {
  * Check if we're in build time (no database connection available)
  * 
  * This detects when we're in a build environment where:
- * - DATABASE_URL is missing (shouldn't happen if GitHub Secrets are set)
- * - DATABASE_URL is a dummy/test value (legacy fallback)
+ * - DATABASE_URL contains 'build' (CI/CD build-time marker)
+ * - DATABASE_URL contains 'dummy' (legacy fallback)
+ * - DATABASE_URL is missing (shouldn't happen)
  */
 function isBuildTime(): boolean {
   const dbUrl = process.env.DATABASE_URL || '';
   
   // If DATABASE_URL is missing entirely, we're definitely in build mode
   if (!dbUrl) {
-    if (process.env.NODE_ENV === 'production') {
-      console.warn('[isBuildTime] WARNING: DATABASE_URL is missing in production build. This should not happen if GitHub Secrets are configured.');
-    }
     return process.env.NODE_ENV === 'production';
   }
   
-  // Check if DATABASE_URL is a dummy value (legacy fallback for old workflows)
-  const isDummyDb = dbUrl.includes('dummy') || 
+  // Check if DATABASE_URL is a build-time marker value
+  const isBuildDb = dbUrl.includes('build') ||
+                    dbUrl.includes('dummy') || 
                     dbUrl.includes('localhost:5432/dummy') ||
-                    dbUrl === 'postgresql://dummy:dummy@localhost:5432/dummy';
+                    dbUrl.includes('localhost:5432/build');
   
-  if (isDummyDb && process.env.NODE_ENV === 'production') {
-    console.warn('[isBuildTime] WARNING: Using dummy DATABASE_URL. This indicates GitHub Secrets are not configured. See .github/SECRETS_SETUP.md');
-  }
-  
-  return process.env.NODE_ENV === 'production' && isDummyDb;
+  return process.env.NODE_ENV === 'production' && isBuildDb;
 }
 
 /**

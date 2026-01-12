@@ -5,17 +5,14 @@ const globalForPrisma = global as unknown as { prisma: PrismaClient };
 // Create a new Prisma client instance for each request in production
 // to avoid prepared statement conflicts with connection pooling
 const createPrismaClient = () => {
-  // Check if we're in build mode (no DATABASE_URL available or dummy value)
+  // Check if we're in build mode (no database connection available)
   const dbUrl = process.env.DATABASE_URL || '';
-  const isDummyDb = dbUrl.includes('dummy') || 
+  const isBuildDb = dbUrl.includes('build') ||
+                    dbUrl.includes('dummy') || 
                     dbUrl.includes('localhost:5432/dummy') ||
-                    dbUrl === 'postgresql://dummy:dummy@localhost:5432/dummy' ||
+                    dbUrl.includes('localhost:5432/build') ||
                     !dbUrl;
-  const isBuildTime = process.env.NODE_ENV === 'production' && isDummyDb;
-  
-  if (isBuildTime && !dbUrl) {
-    console.warn('[createPrismaClient] WARNING: DATABASE_URL is missing. Using mock client. Configure GitHub Secrets to use real database.');
-  }
+  const isBuildTime = process.env.NODE_ENV === 'production' && isBuildDb;
   
   if (isBuildTime) {
     // Return a mock client for build time

@@ -27,11 +27,23 @@ export const formatDateTime = (date: Date | string) => {
 };
 
 /**
+ * Check if we're in build time (no database connection available)
+ */
+function isBuildTime(): boolean {
+  return process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL;
+}
+
+/**
  * Automatically archives PUBLISHED events that have passed (startAt < today)
  * This ensures the Events Calendar only shows current and upcoming events
  * @returns The number of events that were archived
  */
 export async function autoArchivePastEvents(): Promise<number> {
+  // Skip during build time when database is not available
+  if (isBuildTime()) {
+    return 0;
+  }
+
   try {
     const now = new Date();
     // Set to start of today to archive events that have already passed

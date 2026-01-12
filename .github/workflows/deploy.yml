@@ -99,46 +99,6 @@ jobs:
           name: build-files
           path: .next/
           retention-days: 7
-          if-no-files-found: warn
-          continue-on-error: true
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: build-files
-          path: .next/
-          if-no-files-found: warn
-          continue-on-error: true
-
-      - name: Deploy to production
-        run: |
-          echo "✅ Build completed successfully!"
-          echo ""
-          echo "📦 Build artifacts are available in the build job"
-          echo ""
-          echo "To deploy, configure one of the following:"
-          echo "  - Vercel: Add VERCEL_TOKEN secret and uncomment vercel deployment"
-          echo "  - AWS: Add AWS credentials and configure S3 deployment"
-          echo "  - Custom: Add your deployment commands in .github/workflows/deploy.yml"
-          echo ""
-          echo "For now, deployment is skipped. Build artifacts are preserved."
-          # Uncomment and configure one of these when ready:
-          # - name: Deploy to Vercel
-          #   uses: amondnet/vercel-action@v25
-          #   with:
-          #     vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          #     vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          #     vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          #     vercel-args: '--prod'
 
   security-scan:
     runs-on: ubuntu-latest

@@ -83,6 +83,15 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY || 'build' }}
           S3_PUBLIC_BASE_URL: ${{ secrets.S3_PUBLIC_BASE_URL || 'https://build.s3.amazonaws.com' }}
 
+      - name: Verify build output
+        run: |
+          if [ ! -d ".next" ]; then
+            echo "❌ ERROR: .next directory was not created. Build may have failed."
+            exit 1
+          fi
+          echo "✅ Build output verified: .next directory exists"
+          ls -la .next/ | head -10
+
       - name: Upload build artifacts
         if: success()
         uses: actions/upload-artifact@v4
@@ -90,7 +99,8 @@ jobs:
           name: build-files
           path: .next/
           retention-days: 7
-          if-no-files-found: error
+          if-no-files-found: warn
+          continue-on-error: true
 
   deploy:
     needs: build

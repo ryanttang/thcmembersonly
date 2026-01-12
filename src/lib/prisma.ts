@@ -5,13 +5,25 @@ const globalForPrisma = global as unknown as { prisma: PrismaClient };
 // Create a new Prisma client instance for each request in production
 // to avoid prepared statement conflicts with connection pooling
 const createPrismaClient = () => {
-  // Check if we're in build mode (no DATABASE_URL available)
-  const isBuildTime = process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL;
+  // Check if we're in build mode (no DATABASE_URL available or dummy value)
+  const dbUrl = process.env.DATABASE_URL || '';
+  const isDummyDb = dbUrl.includes('dummy') || dbUrl.includes('localhost:5432/dummy') || !dbUrl;
+  const isBuildTime = process.env.NODE_ENV === 'production' && isDummyDb;
   
   if (isBuildTime) {
     // Return a mock client for build time
     return {
       user: { count: () => Promise.resolve(0) },
+      event: {
+        findMany: () => Promise.resolve([]),
+        findFirst: () => Promise.resolve(null),
+        findUnique: () => Promise.resolve(null),
+        count: () => Promise.resolve(0),
+        updateMany: () => Promise.resolve({ count: 0 }),
+        create: () => Promise.resolve({} as any),
+        update: () => Promise.resolve({} as any),
+        delete: () => Promise.resolve({} as any),
+      },
       $executeRaw: () => Promise.resolve(),
       $disconnect: () => Promise.resolve(),
     } as any;

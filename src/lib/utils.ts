@@ -30,7 +30,10 @@ export const formatDateTime = (date: Date | string) => {
  * Check if we're in build time (no database connection available)
  */
 function isBuildTime(): boolean {
-  return process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL;
+  const dbUrl = process.env.DATABASE_URL || '';
+  // Check if DATABASE_URL is missing or is a dummy value (common in CI/CD builds)
+  const isDummyDb = dbUrl.includes('dummy') || dbUrl.includes('localhost:5432/dummy') || !dbUrl;
+  return process.env.NODE_ENV === 'production' && isDummyDb;
 }
 
 /**

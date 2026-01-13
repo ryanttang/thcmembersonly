@@ -64,14 +64,20 @@ export async function autoArchivePastEvents(): Promise<number> {
 
   try {
     const now = new Date();
-    // Set to start of today to archive events that have already passed
-    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    // Set to start of today in UTC to archive events that have already passed
+    // Database dates are stored in UTC, so we need to compare in UTC
+    const startOfTodayUTC = new Date(Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate(),
+      0, 0, 0, 0
+    ));
     
     const result = await prisma.event.updateMany({
       where: {
         status: 'PUBLISHED',
         startAt: {
-          lt: startOfToday
+          lt: startOfTodayUTC
         }
       },
       data: {
@@ -80,7 +86,7 @@ export async function autoArchivePastEvents(): Promise<number> {
     });
     
     if (result.count > 0) {
-      console.log(`[autoArchivePastEvents] Archived ${result.count} past event(s)`);
+      console.log(`[autoArchivePastEvents] Archived ${result.count} past event(s) (before ${startOfTodayUTC.toISOString()})`);
     }
     
     return result.count;
